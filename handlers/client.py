@@ -120,14 +120,35 @@ async def find_karaoke(message: types.Message, state: FSMContext):
     if query is not None:
         karaoke_avatar_id, karaoke_name, owner_username = query
 
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
+        # TODO убрать дублирование кода
+        user_info = sqlite_db.sql_find_user_record(message.from_user.id)
+        if user_info is not None:  # если пользователь такой есть
+            active_karaoke, karaoke_list = user_info
+            karaoke_list = karaoke_list.split('; ')
+            if message.text in karaoke_list:  # если он уже подписан на караоке
+                await bot.send_photo(message.from_user.id,
+                                     karaoke_avatar_id,
+                                     caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}\n\n"
+                                             f"✅ You have already subscribed!",
+                                     parse_mode='HTML')
+            else:
+                keyboard = InlineKeyboardMarkup()
+                keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
 
-        await bot.send_photo(message.from_user.id,
-                             karaoke_avatar_id,
-                             caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}",
-                             reply_markup=keyboard,
-                             parse_mode='HTML')
+                await bot.send_photo(message.from_user.id,
+                                     karaoke_avatar_id,
+                                     caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}",
+                                     reply_markup=keyboard,
+                                     parse_mode='HTML')
+        else:
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
+
+            await bot.send_photo(message.from_user.id,
+                                 karaoke_avatar_id,
+                                 caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}",
+                                 reply_markup=keyboard,
+                                 parse_mode='HTML')
 
         await state.finish()
     else:
@@ -146,11 +167,11 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
 
     query = sqlite_db.sql_find_user_record(user_id)
     if query is None:
-        # Если нет записи о пользователе (нет ни одного караоке в которм он состоит)
+        # Если нет записи о пользователе (нет ни одного караоке в котором он состоит)
         await sqlite_db.sql_add_user_record(user_id, active_karaoke=karaoke_name, karaoke_name=karaoke_name)
     else:
         # Если пользователь уже был в базе, то нужно распарсить список его караоке в которых он учавствует
-        # TODO название караоке не должны повторяться, а быть уникальными, нужно будет применять set() или проверка через in
+        # TODO название караоке не должны повторяться, а быть уникальными
         karaoke_list = query[1].split('; ')
         karaoke_list.append(karaoke_name)
         await sqlite_db.sql_update_user_record(user_id, active_karaoke=karaoke_name, karaoke_list=karaoke_list)
@@ -160,13 +181,11 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
                           show_alert=True)
 
 
-# TODO Ошибка если нажимать статус пользователь который ещё не подписался ни на одно караоке.
 async def status_command(message: types.Message, state: FSMContext):
     await state.finish()
 
     user_info, owner_info = sqlite_db.sql_get_user_status(message.from_user.id)
 
-    print(owner_info)
     if owner_info:  # если список караоке не пустой
         owner_info = [karaoke_name[0] for karaoke_name in owner_info]
         owner_text = "<b>At the moment you own these karaoke:</b>\n- " + '\n- '.join(owner_info) + '\n\n'
@@ -176,8 +195,8 @@ async def status_command(message: types.Message, state: FSMContext):
     if user_info is not None:  # если пользователь такой есть
         active_karaoke, karaoke_list = user_info
         karaoke_list = karaoke_list.split('; ')
-        user_text = "<b>At the moment you are a member of these karaoke:</b>\n" + '\n- '.join(karaoke_list) + '\n\n'
-        user_text += f"<b>Active karaoke:</b>\n{active_karaoke}"
+        user_text = "<b>At the moment you are a member of these karaoke:</b>\n- " + '\n- '.join(karaoke_list) + '\n\n'
+        user_text += f"<b>Active karaoke:</b>\n🎤 {active_karaoke}"
     else:
         user_text = ''
 
@@ -255,7 +274,6 @@ async def callback_cancel_command(callback: types.CallbackQuery, state: FSMConte
     await cancel_command(callback.message, state)
 
 
-# TODO добавить валидацию на текст в хендлерах имени (сделано), осталось валдиация на длину имени и пароля.
 def register_handlers_client(dispatcher: Dispatcher):
 
     dispatcher.register_callback_query_handler(callback_cancel_command, Text(equals='cancel'))
