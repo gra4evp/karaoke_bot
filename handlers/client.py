@@ -166,26 +166,33 @@ async def status_command(message: types.Message, state: FSMContext):
 
     user_info, owner_info = sqlite_db.sql_get_user_status(message.from_user.id)
 
-    if owner_info is None:
-        owner_text = ''
-    else:
+    print(owner_info)
+    if owner_info:  # если список караоке не пустой
         owner_info = [karaoke_name[0] for karaoke_name in owner_info]
         owner_text = "<b>At the moment you own these karaoke:</b>\n- " + '\n- '.join(owner_info) + '\n\n'
-
-    if user_info is None:
-        user_text = ''
     else:
+        owner_text = ''
+
+    if user_info is not None:  # если пользователь такой есть
         active_karaoke, karaoke_list = user_info
         karaoke_list = karaoke_list.split('; ')
         user_text = "<b>At the moment you are a member of these karaoke:</b>\n" + '\n- '.join(karaoke_list) + '\n\n'
         user_text += f"<b>Active karaoke:</b>\n{active_karaoke}"
+    else:
+        user_text = ''
 
     text = owner_text + user_text
 
     if text:
         await message.answer(text, parse_mode='HTML')
     else:
-        await message.answer('Sorry, there is no information about you yet.')
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
+        keyboard.insert(InlineKeyboardButton(text="❌ No", callback_data='cancel'))
+        await message.answer("Sorry, it seems you are a new user and there is no information about you yet.\n\n"
+                             "🖊 Do you want to <b>subscribe</b> to karaoke and order music?",
+                             reply_markup=keyboard,
+                             parse_mode='HTML')
 
 
 async def order_track_command(message: types.Message, state: FSMContext):
