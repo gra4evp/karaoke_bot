@@ -59,13 +59,14 @@ class Karaoke:
 
 
 def find_first_match_karaoke(karaoke_name: str) -> Karaoke:
+    # Поиск по первому совпадению имени из активных караоке
+    # Если не найддет вернет None, значит такого экземпляра класса караоке ещё нет в очереди
     # генератор возвращает первое совпадение по имени
     return next((karaoke for karaoke in ready_to_play_karaoke_list if karaoke.name == karaoke_name), None)
 
 
 def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: str) -> None:
-    # Поиск по первому совпадению имени из активных караоке
-    # Если не найддет вернет None, значит такого экземпляра класса караоке ещё нет в очереди
+
     karaoke = find_first_match_karaoke(karaoke_name)
 
     if karaoke is None:  # Караоке ещё нет в списке
