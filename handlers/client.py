@@ -1,29 +1,13 @@
-import typing
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
+from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
 from create_bot import dispatcher, bot
 from keyboards import client_keyboards as keyboards
 from data_base import sqlite_db
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, User
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
-from karaoke_gram.karaoke import Karaoke, KaraokeUser, ready_to_play_karaoke_list,\
-    find_first_match_karaoke, add_track_to_queue
-
-
-class FSMNewKaraoke(StatesGroup):
-    karaoke_name = State()
-    karaoke_password = State()
-    karaoke_avatar = State()
-
-
-class FSMKaraokeSearch(StatesGroup):
-    karaoke_name = State()
-
-
-class FSMOrderTrack(StatesGroup):
-    link = State()
+from karaoke_gram.karaoke import add_track_to_queue
 
 
 async def start_command(message: types.Message):
