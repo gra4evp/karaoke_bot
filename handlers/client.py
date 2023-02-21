@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
 from create_bot import dispatcher, bot
-from keyboards import client_keyboards as keyboards
+from keyboards import client_keyboards
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
@@ -19,7 +19,7 @@ async def start_command(message: types.Message):
                          "/search_karaoke - search for karaoke among existing ones\n"
                          "/order_track - order a music track\n"
                          "/status - show the current status of the user",
-                         reply_markup=keyboards,
+                         reply_markup=client_keyboards,
                          parse_mode='HTML')
 
 
@@ -84,7 +84,9 @@ async def owner_data_registration(message: types.Message, state: FSMContext):
 
     await sqlite_db.sql_add_owner_record(state)
 
-    await message.answer("You have created your <b>virtual karaoke</b>!", parse_mode='HTML')
+    await message.answer("You have created your <b>virtual karaoke</b>!",
+                         parse_mode='HTML',
+                         reply_markup=client_keyboards.add("/show_queue"))
     await state.finish()
 
 
