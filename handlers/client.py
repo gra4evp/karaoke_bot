@@ -264,7 +264,7 @@ def register_handlers_client(dispatcher: Dispatcher):
     dispatcher.register_message_handler(status_command, Text(equals="Status", ignore_case=True), state='*')
     dispatcher.register_message_handler(status_command, commands=['status'], state='*')
 
-    dispatcher.register_message_handler(start_command, commands=['start', 'help'])
+    dispatcher.register_message_handler(start_command, commands=['start', 'help'], state='*')
 
     dispatcher.register_message_handler(new_karaoke_command, commands=['new_karaoke'])
     # Фильтр для валидации текста
