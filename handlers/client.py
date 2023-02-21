@@ -3,11 +3,12 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
 from create_bot import dispatcher, bot
-from keyboards import client_keyboards
+from keyboards import client_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
 from karaoke_gram.karaoke import add_track_to_queue
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
 async def start_command(message: types.Message):
@@ -19,7 +20,7 @@ async def start_command(message: types.Message):
                          "/search_karaoke - search for karaoke among existing ones\n"
                          "/order_track - order a music track\n"
                          "/status - show the current status of the user",
-                         reply_markup=client_keyboards,
+                         reply_markup=client_keyboard,
                          parse_mode='HTML')
 
 
@@ -84,9 +85,18 @@ async def owner_data_registration(message: types.Message, state: FSMContext):
 
     await sqlite_db.sql_add_owner_record(state)
 
+    # TODO надо убрать клавиатуру, и придумать способ прикрепления команд админа
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    b1 = KeyboardButton("Status")
+    b2 = KeyboardButton("Cancel")
+    b3 = KeyboardButton("/show_queue")
+    keyboard.add(b1)
+    keyboard.insert(b2)
+    keyboard.add(b3)
     await message.answer("You have created your <b>virtual karaoke</b>!",
                          parse_mode='HTML',
-                         reply_markup=client_keyboards.add("/show_queue"))
+                         reply_markup=keyboard)
     await state.finish()
 
 
