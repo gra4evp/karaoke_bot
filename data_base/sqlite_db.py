@@ -60,7 +60,7 @@ def sql_find_owner_id(karaoke_name: str):
 
 
 def sql_find_karaoke_record(karaoke_name: str):
-    return cur.execute("SELECT karaoke_avatar_id, karaoke_name, owner_username FROM owners WHERE karaoke_name == ?",
+    return cur.execute("SELECT karaoke_avatar_id, owner_username FROM owners WHERE karaoke_name == ?",
                        (karaoke_name,)).fetchone()
 
 

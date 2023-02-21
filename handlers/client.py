@@ -102,40 +102,26 @@ async def callback_search_karaoke_command(callback: types.CallbackQuery):
 
 async def find_karaoke(message: types.Message, state: FSMContext):
 
-    query = sqlite_db.sql_find_karaoke_record(karaoke_name=message.text)
-    if query is not None:
-        karaoke_avatar_id, karaoke_name, owner_username = query
+    karaoke_name = message.text
+    user_id = message.from_user.id
 
-        # TODO убрать дублирование кода
+    query = sqlite_db.sql_find_karaoke_record(karaoke_name)
+    if query is not None:  # если есть такое караоке
+        avatar_id, owner_username = query
+
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
+        caption = f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}"
+
         user_info = sqlite_db.sql_find_user_record(message.from_user.id)
-        if user_info is not None:  # если пользователь такой есть
+        if user_info is not None:  # если есть такой пользователь
+
             active_karaoke, karaoke_list = user_info
-            karaoke_list = karaoke_list.split('; ')
-            if message.text in karaoke_list:  # если он уже подписан на караоке
-                await bot.send_photo(message.from_user.id,
-                                     karaoke_avatar_id,
-                                     caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}\n\n"
-                                             f"✅ You have already subscribed!",
-                                     parse_mode='HTML')
-            else:
-                keyboard = InlineKeyboardMarkup()
-                keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
+            if karaoke_name in karaoke_list.split('; '):  # если пользователь уже подписан
+                keyboard = None
+                caption += "\n\n✅ You have already subscribed!"
 
-                await bot.send_photo(message.from_user.id,
-                                     karaoke_avatar_id,
-                                     caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}",
-                                     reply_markup=keyboard,
-                                     parse_mode='HTML')
-        else:
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
-
-            await bot.send_photo(message.from_user.id,
-                                 karaoke_avatar_id,
-                                 caption=f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}",
-                                 reply_markup=keyboard,
-                                 parse_mode='HTML')
-
+        await bot.send_photo(user_id, avatar_id, caption=caption, reply_markup=keyboard, parse_mode='HTML')
         await state.finish()
     else:
         await message.reply("Oops, there is no such karaoke yet.\n\n"
@@ -157,12 +143,11 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
         await sqlite_db.sql_add_user_record(user_id, active_karaoke=karaoke_name, karaoke_name=karaoke_name)
     else:
         # Если пользователь уже был в базе, то нужно распарсить список его караоке в которых он учавствует
-        # TODO название караоке не должны повторяться, а быть уникальными
         karaoke_list = query[1].split('; ')
         karaoke_list.append(karaoke_name)
         await sqlite_db.sql_update_user_record(user_id, active_karaoke=karaoke_name, karaoke_list=karaoke_list)
 
-    await callback.answer(f'You have joined "{karaoke_name}" karaoke.\n'
+    await callback.answer(f'✅ You have joined "{karaoke_name}" karaoke.\n'
                           f'Now you can order tracks in it.',
                           show_alert=True)
 
