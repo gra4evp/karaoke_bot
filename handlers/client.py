@@ -33,8 +33,9 @@ async def new_karaoke_command(message: types.Message):
 
 
 async def karaoke_name_registration(message: types.Message, state: FSMContext):
-    # TODO нужно добавить проверку, если караоке с таким именем уже есть
+
     karaoke_name = message.text
+
     if not sqlite_db.karaoke_is_exists(karaoke_name):
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
@@ -42,8 +43,7 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
         await message.answer("Now come up with a <b>password</b> for your virtual karaoke.", parse_mode='HTML')
         await FSMNewKaraoke.next()
     else:
-        await message.answer("Unfortunately, the karaoke with that <b>name</b> is already taken.",
-                             parse_mode='HTML')
+        await message.reply("🔒 Sorry, this <b>name</b> is already taken.", parse_mode='HTML')
 
 
 async def state_karaoke_name_is_invalid(message: types.Message):
@@ -89,6 +89,7 @@ async def owner_data_registration(message: types.Message, state: FSMContext):
         data['owner_last_name'] = message.from_user.last_name
         data['owner_username'] = message.from_user.username
 
+    # TODO переписать функцию добавления записи (передавать не состояние а все, что нужно записать)
     await sqlite_db.sql_add_owner_record(state)
 
     # TODO надо убрать клавиатуру, и придумать способ прикрепления команд админа

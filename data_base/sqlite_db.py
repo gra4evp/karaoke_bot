@@ -64,8 +64,9 @@ def sql_find_karaoke_record(karaoke_name: str):
                        (karaoke_name,)).fetchone()
 
 
-def karaoke_is_exists(karaoke_name: str):
-    return cur.execute("EXISTS(SELECT karaoke_name FROM owners WHERE karaoke_name == ?)", (karaoke_name,))
+def karaoke_is_exists(karaoke_name: str) -> int:  # возвращает либо 0 либо 1
+    return cur.execute("SELECT EXISTS(SELECT karaoke_name FROM owners WHERE karaoke_name == ?)",
+                       (karaoke_name,)).fetchone()[0]
 
 
 async def sql_add_user_record(user_id: str, active_karaoke: str, karaoke_name: str):
