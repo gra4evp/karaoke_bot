@@ -33,11 +33,17 @@ async def new_karaoke_command(message: types.Message):
 
 
 async def karaoke_name_registration(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['karaoke_name'] = message.text
+    # TODO нужно добавить проверку, если караоке с таким именем уже есть
+    karaoke_name = message.text
+    if not sqlite_db.karaoke_is_exists(karaoke_name):
+        async with state.proxy() as data:
+            data['karaoke_name'] = karaoke_name
 
-    await message.answer("Now come up with a <b>password</b> for your virtual karaoke.", parse_mode='HTML')
-    await FSMNewKaraoke.next()
+        await message.answer("Now come up with a <b>password</b> for your virtual karaoke.", parse_mode='HTML')
+        await FSMNewKaraoke.next()
+    else:
+        await message.answer("Unfortunately, the karaoke with that <b>name</b> is already taken.",
+                             parse_mode='HTML')
 
 
 async def state_karaoke_name_is_invalid(message: types.Message):

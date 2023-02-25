@@ -64,6 +64,10 @@ def sql_find_karaoke_record(karaoke_name: str):
                        (karaoke_name,)).fetchone()
 
 
+def karaoke_is_exists(karaoke_name: str):
+    return cur.execute("EXISTS(SELECT karaoke_name FROM owners WHERE karaoke_name == ?)", (karaoke_name,))
+
+
 async def sql_add_user_record(user_id: str, active_karaoke: str, karaoke_name: str):
     cur.execute("INSERT INTO visitors VALUES(?, ?, ?)", (user_id, active_karaoke, karaoke_name))
     base.commit()
