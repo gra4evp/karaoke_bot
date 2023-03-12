@@ -84,13 +84,16 @@ async def state_karaoke_avatar_is_invalid(message: types.Message):
 async def owner_data_registration(message: types.Message, state: FSMContext):
 
     async with state.proxy() as data:
-        data['owner_id'] = message.from_user.id
-        data['owner_first_name'] = message.from_user.first_name
-        data['owner_last_name'] = message.from_user.last_name
-        data['owner_username'] = message.from_user.username
+        karaoke_name = data.get('karaoke_name')
+        password = data.get('karaoke_password')
+        avatar_id = data.get('karaoke_avatar')
 
-    # TODO переписать функцию добавления записи (передавать не состояние а все, что нужно записать)
-    await sqlite_db.sql_add_owner_record(state)
+    onwer_id = message.from_user.id
+    first_name = message.from_user.first_name
+    last_name = message.from_user.last_name
+    username = message.from_user.username
+
+    await sqlite_db.sql_add_owner_record(karaoke_name, password, avatar_id, onwer_id, first_name, last_name, username)
 
     # TODO надо убрать клавиатуру, и придумать способ прикрепления команд админа
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)

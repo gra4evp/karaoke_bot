@@ -1,8 +1,4 @@
 import sqlite3 as sq
-from aiogram.dispatcher import FSMContext
-from aiogram import types
-from create_bot import bot
-
 
 base = sq.connect("karaoke")
 cur = base.cursor()
@@ -48,11 +44,18 @@ def sql_start():
     base.commit()
 
 
-async def sql_add_owner_record(state: FSMContext):
+async def sql_add_owner_record(
+        karaoke_name: str,
+        password: str,
+        avatar_id: str,
+        owner_id: str,
+        first_name: str,
+        last_name: str,
+        username: str):
 
-    async with state.proxy() as data:
-        cur.execute("INSERT INTO owners VALUES(?, ?, ?, ?, ?, ?, ?)", tuple(data.values()))
-        base.commit()
+    cur.execute("INSERT INTO owners VALUES(?, ?, ?, ?, ?, ?, ?)",
+                (karaoke_name, password, avatar_id, owner_id, first_name, last_name, username))
+    base.commit()
 
 
 def sql_find_owner_id(karaoke_name: str):
