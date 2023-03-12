@@ -60,7 +60,7 @@ class Karaoke:
 
 def find_first_match_karaoke(karaoke_name: str) -> Karaoke:
     # Поиск по первому совпадению имени из активных караоке
-    # Если не найддет вернет None, значит такого экземпляра класса караоке ещё нет в очереди
+    # Если не найдет вернет None, значит такого экземпляра класса караоке ещё нет в очереди
     # генератор возвращает первое совпадение по имени
     return next((karaoke for karaoke in ready_to_play_karaoke_list if karaoke.name == karaoke_name), None)
 
@@ -70,25 +70,14 @@ def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: 
     karaoke = find_first_match_karaoke(karaoke_name)
 
     if karaoke is None:  # Караоке ещё нет в списке
-        # Создаем караоке с пользователем и его треком
         karaoke = Karaoke(karaoke_name, owner_id)
-        karaoke_user = KaraokeUser(user)
-
-        karaoke_user.add_track_to_queue(track_url)
-        karaoke.add_user_to_queue(karaoke_user)
-
         ready_to_play_karaoke_list.append(karaoke)
 
-    else:
-        karaoke_user = karaoke.find_user(user.id)
-        if karaoke_user is None:  # Караоке есть, но такого пользователя в нем нет.
-            karaoke_user = KaraokeUser(user)
-            karaoke_user.add_track_to_queue(track_url)
-            karaoke.add_user_to_queue(karaoke_user)  # Добавляем пользователя в караоке вместе с треком
+    karaoke_user = karaoke.find_user(user.id) if karaoke else None
+    if karaoke_user is None:  # Караоке есть, но такого пользователя в нем нет.
+        karaoke.add_user_to_queue(KaraokeUser(user))
 
-        else:  # Караоке есть и такой пользователь в нем тоже есть
-            karaoke_user.add_track_to_queue(track_url)  # Добавляем новый трек в список его треков
-
+    karaoke_user.add_track_to_queue(track_url)
     print(ready_to_play_karaoke_list)
 
 
