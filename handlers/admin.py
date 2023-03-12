@@ -1,11 +1,8 @@
 from aiogram import Dispatcher
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram import types
 from aiogram.dispatcher.filters import Text
-from create_bot import dispatcher, bot
 from aiogram.utils.markdown import hlink
-from karaoke_gram.karaoke import Karaoke, KaraokeUser, ready_to_play_karaoke_list, find_first_match_karaoke
+from karaoke_gram.karaoke import ready_to_play_karaoke_list
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
