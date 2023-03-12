@@ -3,18 +3,6 @@ from yt_dlp import YoutubeDL
 
 
 def get_video_info(url: str) -> Dict[str, str]:
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'wav',
-            'preferredquality': '192',
-        }],
-        'outtmpl': './%(title)s.%(ext)s',
-        'cachedir': './',
-        'noplaylist': True,
-        'extractaudio': True,
-    }
     with YoutubeDL() as ydl:
         info = ydl.extract_info(url, download=False)
         video_info = {
@@ -33,8 +21,12 @@ def get_video_info(url: str) -> Dict[str, str]:
 
 
 if __name__ == '__main__':
-    url = input("Введите URL видео на YouTube: ")
-    info = get_video_info(url)
+    track_url = input("Введите URL видео на YouTube: ")
+    info = get_video_info(track_url)
+
+    # info = ydl.extract_info(url, download=False)
+    # print(info['id'], info['description'])
+    # print(json.dumps(ydl.sanitize_info(info), indent=2))
 
     print("Title:", info["title"])
     print("Uploader:", info["uploader"])

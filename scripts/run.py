@@ -2,12 +2,15 @@ import subprocess
 import argparse
 from music2vec.extraction import Extractor
 from yt_dlp import YoutubeDL
+import os
 import ffmpeg
 import json
 
 
 def download_video_youtube(url: str):
-    url = url.replace('&', '"&"')
+    # url = url.replace('&', '"&"')
+    outtmpl = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tracks_wav', '%(title)s.%(ext)s')
+    cachedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tracks_cache')
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -15,16 +18,14 @@ def download_video_youtube(url: str):
             'preferredcodec': 'wav',
             'preferredquality': '192',
         }],
-        'outtmpl': './%(title)s.%(ext)s',
-        'cachedir': './',
+        'outtmpl': outtmpl,
+        'cachedir': cachedir,
         'noplaylist': True,
         'extractaudio': True,
+        'no_cache_dir': True
     }
     with YoutubeDL(ydl_opts) as ydl:
         error_code = ydl.download(url)
-        info = ydl.extract_info(url, download=False)
-        print(info['id'], info['description'])
-        # print(json.dumps(ydl.sanitize_info(info), indent=2))
 
 
 def wav2vec(file_wav):
