@@ -26,6 +26,12 @@ class YouTubeVideo:
                 }
         return self.video_info
 
+    def __str__(self) -> str:
+        return f"YouTubeVideo: title - {self.video_info['title']} id - {self.video_info['video_id']}"
+
+    def __repr__(self) -> str:
+        return f"YouTubeVideo(url='{self.url}')"
+
 
 if __name__ == '__main__':
     track_url = input("Введите URL видео на YouTube: ")
