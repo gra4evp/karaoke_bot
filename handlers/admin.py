@@ -15,7 +15,7 @@ async def show_queue_command(message: types.Message):
                 no_more_tracks = 0
                 for user in karaoke.user_queue:
                     try:
-                        track_url = user.track_queue[index]
+                        track = user.track_queue[index]
                         track_number += 1
 
                         keyboard = InlineKeyboardMarkup()
@@ -23,7 +23,7 @@ async def show_queue_command(message: types.Message):
                         keyboard.insert(InlineKeyboardButton(
                             text="❌ Remove from queue",
                             callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {index}'))
-                        await message.answer(f"{track_number}. {hlink('Track', track_url)}\n"
+                        await message.answer(f"{track_number}. {hlink('Track', track.url)}\n"
                                              f"Ordered by: @{user.aiogram_user.username}\n"
                                              f"Karaoke: {karaoke.name}",
                                              reply_markup=keyboard,

@@ -1,28 +1,37 @@
 from typing import List
 from collections import deque
 from aiogram.types import User
+from scripts.youtube_parser.youtube_parse import YouTubeVideo
 
-# Нужно создать и хранить где-то список или другую структуру данных со всеми заведениями где люди в данный момент готовы выступать.
-# Когда приходит запрос на исполнение музыки в каком-то караоке, нужно добавить такое заведение в тот список.
 
-# После добавления такого заведения в список, можно уже ставить пользователей в очередь.
-# Чтобы поставить пользователся в очередь нужно поимать заказ музыки и поставить человека в очередь.
-# Как только приходит новый пользователь и заказывает музыку, нужно поставить его в конец очереди.
-# После того как очередь сформирована на промежуточном этапе, нужно брать первого человека из очереди, и присылать владельцу караоке заказ мызыки (по нажатию кнопки).
-# После чего ставить этого пользователя в самый конец очереди.
-# Если запас треков какого-то пользователя исчерпался, нужно выкинуть его из очереди.
+class Track:
+
+    def __init__(self, url):
+        self.url = url
+
+    def __str__(self):
+        pass
+
+    def __repr__(self):
+        pass
+
+
+class YouTubeTrack(Track):
+    pass
 
 
 class KaraokeUser:
 
     def __init__(self, user: User):
         self.aiogram_user = user
-        self.track_queue: deque[str] = deque()
+        self.track_queue: deque[YouTubeVideo] = deque()
 
     def add_track_to_queue(self, track_url):
         if not isinstance(track_url, str):
             raise ValueError("Url should be an instance of <str>")
-        self.track_queue.append(track_url)
+        track = YouTubeVideo(track_url)
+        track.get_info()
+        self.track_queue.append(track)
 
     def pop_next_track(self):
         return self.track_queue.popleft() if self.track_queue else None
@@ -73,9 +82,10 @@ def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: 
         karaoke = Karaoke(karaoke_name, owner_id)
         ready_to_play_karaoke_list.append(karaoke)
 
-    karaoke_user = karaoke.find_user(user.id) if karaoke else None
+    karaoke_user = karaoke.find_user(user.id)
     if karaoke_user is None:  # Караоке есть, но такого пользователя в нем нет.
-        karaoke.add_user_to_queue(KaraokeUser(user))
+        karaoke_user = KaraokeUser(user)
+        karaoke.add_user_to_queue(karaoke_user)
 
     karaoke_user.add_track_to_queue(track_url)
     print(ready_to_play_karaoke_list)
