@@ -6,8 +6,9 @@ from create_bot import dispatcher, bot
 from keyboards import client_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
-from karaoke_gram.karaoke import add_track_to_queue
+from karaoke_gram.karaoke import Karaoke, find_first_match_karaoke, add_track_to_queue
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
@@ -251,6 +252,32 @@ async def state_link_is_invalid(message: types.Message):
                         parse_mode='HTML')
 
 
+async def show_my_orders_command(message: types.Message):
+    query = sqlite_db.sql_find_user_record(message.from_user.id)
+    print(query)
+    if query is None:
+        await message.answer("Хотите подключиться к караоке?")
+    else:
+        active_karaoke, karaoke_list = query
+        karaoke = find_first_match_karaoke(active_karaoke)
+        if karaoke is None:
+            await message.answer("Ваш список заказов пуст")
+        else:
+            user = karaoke.find_user(message.from_user.id)
+            queue_length = len(user.track_queue)
+            if queue_length:
+                for i in range(queue_length):
+                    keyboard = InlineKeyboardMarkup()
+                    keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
+                    keyboard.insert(InlineKeyboardButton(text="❌ Remove", callback_data=f'rm_track'))
+                    await message.answer(f"{i + 1}. {hlink('Track', user.track_queue[i].url)}\n"
+                                         f"Karaoke: {karaoke.name}",
+                                         reply_markup=keyboard,
+                                         parse_mode='HTML')
+            else:
+                await message.answer("Ваш список заказов пуст")
+
+
 async def cancel_command(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
@@ -307,11 +334,13 @@ def register_handlers_client(dispatcher: Dispatcher):
 
     dispatcher.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
 
-    dispatcher.register_message_handler(order_track_command, commands='order_track')
+    dispatcher.register_message_handler(order_track_command, commands=['order_track'])
     dispatcher.register_message_handler(add_link,
                                         Text(startswith=['https://www.youtube.com/watch?v=',
                                                          'https://youtu.be/',
                                                          'https://xminus.me/track/']),
                                         state=FSMOrderTrack.link)
     dispatcher.register_message_handler(state_link_is_invalid, content_types='any', state=FSMOrderTrack.link)
+
+    dispatcher.register_message_handler(show_my_orders_command, commands=['show_my_orders'])
 
