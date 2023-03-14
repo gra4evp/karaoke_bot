@@ -1,13 +1,17 @@
-from typing import List
+from typing import List, Dict
 from collections import deque
 from aiogram.types import User
-from scripts.youtube_parser.youtube_parse import YouTubeVideo
+from yt_dlp import YoutubeDL
 
 
 class Track:
 
     def __init__(self, url):
         self.url = url
+        self.info: Dict[str, str] = {}
+
+    def get_info(self):
+        raise NotImplementedError
 
     def __str__(self):
         pass
@@ -17,24 +21,74 @@ class Track:
 
 
 class YouTubeTrack(Track):
-    pass
+
+    def __init__(self, url: str):
+        super().__init__(url)
+
+    def get_info(self) -> Dict[str, str]:
+        if not self.info:
+            ydl_opts = {'quiet': True}
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                self.info = {
+                    'video_id': info.get('id', ''),
+                    'title': info.get('title', ''),
+                    'uploader': info.get('uploader', ''),
+                    'description': info.get('description', ''),
+                    'duration': info.get('duration', 0),
+                    'view_count': info.get('view_count', 0),
+                    'like_count': info.get('like_count', 0),
+                    'comment_count': info.get('comment_count', 0),
+                    'categories': info.get('categories', [])
+                }
+        return self.info
+
+    def __str__(self) -> str:
+        return f"YouTubeTrack: title - {self.info['title']} id - {self.info['video_id']}"
+
+    def __repr__(self) -> str:
+        return f"YouTubeTrack(url='{self.url}')"
+
+
+class XMinusTrack(Track):
+    def __init__(self, url: str):
+        super().__init__(url)
+
+    def get_info(self):
+        if not self.info:
+            # логика для получения информации о треке на xminus.com
+            pass
+        return self.info
+
+    def __str__(self) -> str:
+        return f"XMinusTrack: url - {self.url}"
+
+    def __repr__(self) -> str:
+        return f"XMinusTrack(url='{self.url}')"
 
 
 class KaraokeUser:
 
     def __init__(self, user: User):
         self.aiogram_user = user
-        self.track_queue: deque[YouTubeVideo] = deque()
+        self.track_queue: deque[Track] = deque()
 
     def add_track_to_queue(self, track_url):
         if not isinstance(track_url, str):
             raise ValueError("Url should be an instance of <str>")
-        track = YouTubeVideo(track_url)
-        track.get_info()
+        track = self.get_track_instance(track_url)
         self.track_queue.append(track)
 
     def pop_next_track(self):
         return self.track_queue.popleft() if self.track_queue else None
+
+    @staticmethod
+    def get_track_instance(track_url):
+        if 'youtube.com' in track_url or 'youtu.be' in track_url:
+            return YouTubeTrack(track_url)
+
+        if 'xminus.me' in track_url:
+            return XMinusTrack(track_url)
 
     def __str__(self):
         return f"KaraokeUser(user={self.aiogram_user}, track_queue={list(self.track_queue)})"
@@ -68,8 +122,6 @@ class Karaoke:
 
 
 def find_first_match_karaoke(karaoke_name: str) -> Karaoke:
-    # Поиск по первому совпадению имени из активных караоке
-    # Если не найдет вернет None, значит такого экземпляра класса караоке ещё нет в очереди
     # генератор возвращает первое совпадение по имени
     return next((karaoke for karaoke in ready_to_play_karaoke_list if karaoke.name == karaoke_name), None)
 
@@ -77,7 +129,6 @@ def find_first_match_karaoke(karaoke_name: str) -> Karaoke:
 def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: str) -> None:
 
     karaoke = find_first_match_karaoke(karaoke_name)
-
     if karaoke is None:  # Караоке ещё нет в списке
         karaoke = Karaoke(karaoke_name, owner_id)
         ready_to_play_karaoke_list.append(karaoke)
