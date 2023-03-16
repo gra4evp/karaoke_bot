@@ -1,0 +1,159 @@
+from aiogram.utils import executor
+from aiogram import Bot
+from aiogram.dispatcher import Dispatcher, FSMContext
+from aiogram import types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove,\
+    InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.dispatcher.filters import Text
+import json
+import random
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
+
+API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
+# API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
+bot = Bot(token=API_TOKEN)
+
+storage = MemoryStorage()
+dispatcher = Dispatcher(bot, storage=storage)
+
+counter_no = 0
+counter_yes = 0
+
+user_ids = {}
+queue_ids = []
+admin_id = 1206756552
+# admin_id = 375571119  # мой айди
+
+
+class FSMOrderTrack(StatesGroup):
+    track_url = State()
+
+
+def load_links_by_user_id(input_file_name):
+    with open(input_file_name, 'r') as f:
+        links_by_user_id = json.load(f)
+    return links_by_user_id
+
+
+def get_unique_links(file_name):
+    unique_links = set()
+    with open(file_name, 'r') as f:
+        for line in f:
+            _, link = line.strip().split(', ')
+            unique_links.add(link)
+    return unique_links
+
+unique_links = get_unique_links('id-url_08_03_2023.txt')
+
+links_by_user_id = load_links_by_user_id('links_by_user_id.txt')
+
+
+async def start(message: types.Message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    if message.from_user.id != admin_id:
+        markup.add(KeyboardButton("I want to sing a song"))
+    else:
+        markup.add(KeyboardButton("The Venue"))
+        markup.add(KeyboardButton("Bowie Jan"))
+
+    bot_info = await bot.get_me()
+    await message.answer(f"Welcome, {message.from_user.first_name}!\nI'm  - <b>{bot_info.first_name}</b>, "
+                         f"the telegram bot of my favorite Venue bar. "
+                         f"And I'm here to help you sing as many songs as possible! "
+                         f"I hope you warmed up your vocal cords. 😏",
+                         parse_mode='html',
+                         reply_markup=markup)
+
+
+async def text(message: types.Message):
+    if message.text == 'I want to sing a song':
+        await message.answer('Good! Add youtube link 😉')
+        await FSMOrderTrack.track_url.set()
+
+    if message.text == "The Venue":
+        await bot.send_message(admin_id, 'Okay, boss', reply_markup=ReplyKeyboardRemove())
+        new_markup = ReplyKeyboardMarkup(resize_keyboard=True)
+        new_markup.add(KeyboardButton("Get next link round"))
+        await bot.send_message(admin_id, "Let's go !", reply_markup=new_markup)
+
+    if message.text == 'Get next link round':
+        counter_empty = 0
+        for user_id, list_links in user_ids.items():
+            if len(list_links) >= 1:
+                await bot.send_message(admin_id, list_links.pop(0))
+            else:
+                counter_empty += 1
+
+        if counter_empty == len(user_ids):
+            await bot.send_message(admin_id, 'Oops, Seems the songs are over.')
+
+
+async def add_link(message: types.Message, state: FSMContext):
+    await state.finish()
+
+    user_id = message.from_user.id
+
+    if user_id not in user_ids:
+        user_ids[user_id] = []
+
+    text = message.text
+    if 'https' in text:
+        user_ids[user_id].append(text)
+        print(f'{user_id}, {text}')
+        await message.answer('Success! Sing better than the original, I believe in you 😇')
+    else:
+        await message.answer('You added the link incorrectly, please try again 😉')
+
+    # ---------------------------------------------------------------------------------------------------------
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track'))
+
+    global counter_no
+    counter_no += 1
+    links = links_by_user_id.get(str(user_id), None)
+    if links is not None:
+        try:
+            random_index = random.randint(0, len(links) - 1)
+            link = links.pop(random_index)
+            await message.answer(f"{link}\n\nTest recomendation\nYou previously ordered this track",
+                                 reply_markup=keyboard,
+                                 parse_mode='HTML')
+        except:
+            link = random.choice(list(unique_links))
+            await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
+                                 reply_markup=keyboard,
+                                 parse_mode='HTML')
+    else:
+        link = random.choice(list(unique_links))
+        await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
+                             reply_markup=keyboard,
+                             parse_mode='HTML')
+
+
+async def handle_link(callback: types.CallbackQuery):
+    global counter_yes
+    counter_yes += 1
+    user_id = callback.from_user.id
+    text = callback.message.text.split('\n\n')
+
+    link = text[0]
+    user_ids[user_id].append(text)
+    print(f'{user_id}, {link}')
+    await callback.answer('Success! Sing better than the original, I believe in you 😇')
+
+
+def register_handlers(dispatcher: Dispatcher):
+    dispatcher.register_message_handler(start, commands=['start'])
+    dispatcher.register_message_handler(text, content_types=['text'])
+    dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
+    dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
+
+
+if __name__ == "__main__":
+    register_handlers(dispatcher)
+    executor.start_polling(dispatcher, skip_updates=True)
+    print(f"counter_no: {counter_no}")
+    print(f"counter_yes: {counter_yes}")
