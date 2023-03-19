@@ -3,6 +3,7 @@ from aiogram import types
 from aiogram.dispatcher.filters import Text
 from aiogram.utils.markdown import hlink
 from karaoke_gram.karaoke import ready_to_play_karaoke_list
+# from keyboards.admin_keyboards import inline_admin_keyboard as keyboard
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
@@ -17,7 +18,6 @@ async def show_queue_command(message: types.Message):
                     try:
                         track = user.track_queue[index]
                         track_number += 1
-
                         keyboard = InlineKeyboardMarkup()
                         keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                         keyboard.insert(InlineKeyboardButton(
@@ -28,20 +28,29 @@ async def show_queue_command(message: types.Message):
                                              f"Karaoke: {karaoke.name}",
                                              reply_markup=keyboard,
                                              parse_mode='HTML')
-
-                        # async with state.proxy() as data:
-                        #     data[] = [karaoke, user, track_url]
-
-                        # await message.answer(f"{track_number}. [⁠]({track_url})\n"
-                        #                      f"User: @{user.aiogram_user.username}\n"
-                        #                      f"Karaoke: {karaoke.name}",
-                        #                      reply_markup=keyboard,
-                        #                      parse_mode='markdown')  # в квадратных скобках невидимый word joiner
                     except IndexError:
                         no_more_tracks += 1
                 if no_more_tracks == len(karaoke.user_queue):
                     break
                 index += 1
+
+
+async def show_circular_queue_command(message: types.Message):
+    for karaoke in ready_to_play_karaoke_list:
+        if karaoke.owner_id == message.from_user.id:
+            for track_number, user, track in karaoke.get_next_round_queue():
+                index = track_number - 1
+                keyboard = InlineKeyboardMarkup()
+                keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
+                keyboard.insert(InlineKeyboardButton(
+                    text="❌ Remove from queue",
+                    callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {index}')
+                )
+                await message.answer(f"{track_number}. {hlink('Track', track.url)}\n"
+                                     f"Ordered by: @{user.aiogram_user.username}\n"
+                                     f"Karaoke: {karaoke.name}",
+                                     reply_markup=keyboard,
+                                     parse_mode='HTML')
 
 
 async def callback_remove_from_queue(callback: types.CallbackQuery):
@@ -69,4 +78,5 @@ async def callback_remove_from_queue(callback: types.CallbackQuery):
 
 def register_handlers_admin(dispatcher: Dispatcher):
     dispatcher.register_message_handler(show_queue_command, commands=['show_queue'])
+    dispatcher.register_message_handler(show_circular_queue_command, commands=['show_circular_queue'])
     dispatcher.register_callback_query_handler(callback_remove_from_queue, Text(startswith='rm_from_queue'))
