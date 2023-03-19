@@ -82,7 +82,7 @@ async def text(message: types.Message):
     if message.text == 'Get next link round':
         counter_empty = 0
         for user_id, list_links in user_ids.items():
-            if len(list_links) >= 1:
+            if len(list_links):
                 await bot.send_message(admin_id, list_links.pop(0))
             else:
                 counter_empty += 1
