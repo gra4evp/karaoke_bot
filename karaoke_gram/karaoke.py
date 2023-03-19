@@ -72,6 +72,19 @@ class KaraokeUser:
     def __init__(self, user: User):
         self.aiogram_user = user
         self.track_queue: deque[Track] = deque()
+        self.track_queue_index: int = 0
+
+    def show_next_track(self):
+        if not self.track_queue:  # track_queue is empty
+            return None
+
+        track = self.track_queue[self.track_queue_index]
+        self.track_queue_index += 1
+
+        if self.track_queue_index > len(self.track_queue) - 1:  # last_index
+            self.track_queue_index = 0
+
+        return track
 
     def add_track_to_queue(self, track_url):
         if not isinstance(track_url, str):
@@ -102,6 +115,36 @@ class Karaoke:
         self.name = name
         self.owner_id = owner_id
         self.user_queue: deque[KaraokeUser] = deque()
+        self.user_queue_index: int = 0
+        self.track_queue_index: int = 0
+
+    def show_next_user(self):
+        if not self.user_queue:  # user_queue is empty
+            return None
+
+        user = self.user_queue[self.user_queue_index]
+        self.user_queue_index += 1
+
+        if self.user_queue_index > len(self.user_queue) - 1:
+            self.user_queue_index = 0
+        return user
+
+    def get_next_round_queue(self) -> List:
+        if not self.user_queue:
+            return None
+
+        max_queue_index = max(user.track_queue_index for user in self.user_queue)
+        if max_queue_index == 0:
+            self.track_queue_index = 0
+
+        users_tracks = []
+        for user in self.user_queue:
+            if user.track_queue_index == max_queue_index:
+                track = user.show_next_track()
+                if track is not None:
+                    self.track_queue_index += 1
+                    users_tracks.append((self.track_queue_index, user, track))
+        return users_tracks
 
     def add_user_to_queue(self, user: KaraokeUser):
         if not isinstance(user, KaraokeUser):
