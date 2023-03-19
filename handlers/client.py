@@ -20,6 +20,8 @@ async def start_command(message: types.Message):
                          "/new_karaoke - create a new karaoke\n"
                          "/search_karaoke - search for karaoke among existing ones\n"
                          "/order_track - order a music track\n"
+                         "/show_queue - show a queue of tracks in karaoke\n"
+                         "/show_circular_queue - show round of queue\n"
                          "/status - show the current status of the user",
                          reply_markup=client_keyboard,
                          parse_mode='HTML')
