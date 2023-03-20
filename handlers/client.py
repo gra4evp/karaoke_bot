@@ -7,8 +7,7 @@ from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
-from karaoke_gram.karaoke import Karaoke, find_first_match_karaoke, add_track_to_queue
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 
 
 async def new_karaoke_command(message: types.Message):
@@ -82,18 +81,7 @@ async def owner_data_registration(message: types.Message, state: FSMContext):
 
     await sqlite_db.sql_add_owner_record(karaoke_name, password, avatar_id, onwer_id, first_name, last_name, username)
 
-    # TODO надо убрать клавиатуру, и придумать способ прикрепления команд админа
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-
-    b1 = KeyboardButton("Status")
-    b2 = KeyboardButton("Cancel")
-    b3 = KeyboardButton("/show_queue")
-    keyboard.add(b1)
-    keyboard.insert(b2)
-    keyboard.add(b3)
-    await message.answer("You have created your <b>virtual karaoke</b>!",
-                         parse_mode='HTML',
-                         reply_markup=keyboard)
+    await message.answer("You have created your <b>virtual karaoke</b>!", parse_mode='HTML')
     await state.finish()
 
 
@@ -213,7 +201,7 @@ async def show_my_orders_command(message: types.Message):
         active_karaoke, karaoke_list = query
         karaoke = find_first_match_karaoke(active_karaoke)
         if karaoke is None:
-            await message.answer("Ваш список заказов пуст")
+            await message.answer("🗒 You haven't ordered any tracks yet")
         else:
             user = karaoke.find_user(message.from_user.id)
             queue_length = len(user.track_queue)
@@ -227,7 +215,7 @@ async def show_my_orders_command(message: types.Message):
                                          reply_markup=keyboard,
                                          parse_mode='HTML')
             else:
-                await message.answer("Ваш список заказов пуст")
+                await message.answer("🗒 You haven't ordered any tracks yet")
 
 
 def register_handlers_client(dispatcher: Dispatcher):
