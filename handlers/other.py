@@ -1,14 +1,14 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from keyboards import client_keyboard
+from keyboards import other_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import START_TEXT
 
 
 async def start_command(message: types.Message):
-    await message.answer(START_TEXT, reply_markup=client_keyboard, parse_mode='HTML')
+    await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
