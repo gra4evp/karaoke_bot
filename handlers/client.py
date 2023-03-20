@@ -3,28 +3,12 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
 from create_bot import dispatcher, bot
-from keyboards import client_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
 from karaoke_gram.karaoke import Karaoke, find_first_match_karaoke, add_track_to_queue
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-
-async def start_command(message: types.Message):
-    await message.answer("Hello, I'm <b>Moloko</b> - karaoke bot.\n"
-                         "I can help you create and manage virtual karaoke and order tracks to your karaoke-man "
-                         "(person responsible for turning on the music).\n\n"
-                         "You can control me by sending these commands:\n\n"
-                         "/new_karaoke - create a new karaoke\n"
-                         "/search_karaoke - search for karaoke among existing ones\n"
-                         "/order_track - order a music track\n"
-                         "/show_queue - show a queue of tracks in karaoke\n"
-                         "/show_circular_queue - show round of queue\n"
-                         "/status - show the current status of the user",
-                         reply_markup=client_keyboard,
-                         parse_mode='HTML')
 
 
 async def new_karaoke_command(message: types.Message):
@@ -175,39 +159,6 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
                           show_alert=True)
 
 
-async def status_command(message: types.Message, state: FSMContext):
-    await state.finish()
-
-    user_info, owner_info = sqlite_db.sql_get_user_status(message.from_user.id)
-
-    if owner_info:  # если список караоке не пустой
-        owner_info = [karaoke_name[0] for karaoke_name in owner_info]
-        owner_text = "<b>At the moment you own these karaoke:</b>\n- " + '\n- '.join(owner_info) + '\n\n'
-    else:
-        owner_text = ''
-
-    if user_info is not None:  # если пользователь такой есть
-        active_karaoke, karaoke_list = user_info
-        karaoke_list = karaoke_list.split('; ')
-        user_text = "<b>At the moment you are a member of these karaoke:</b>\n- " + '\n- '.join(karaoke_list) + '\n\n'
-        user_text += f"<b>Active karaoke:</b>\n🎤 {active_karaoke}"
-    else:
-        user_text = ''
-
-    text = owner_text + user_text
-
-    if text:
-        await message.answer(text, parse_mode='HTML')
-    else:
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
-        keyboard.insert(InlineKeyboardButton(text="❌ No", callback_data='cancel'))
-        await message.answer("Sorry, it seems you are a new user and there is no information about you yet.\n\n"
-                             "🖊 Do you want to <b>subscribe</b> to karaoke and order music?",
-                             reply_markup=keyboard,
-                             parse_mode='HTML')
-
-
 async def order_track_command(message: types.Message, state: FSMContext):
     # Если нет записи о пользователе, то перехходим в хендлер_callback для команды /search_karaoke или /cancel
     query = sqlite_db.sql_find_user_record(message.from_user.id)
@@ -256,7 +207,6 @@ async def state_link_is_invalid(message: types.Message):
 
 async def show_my_orders_command(message: types.Message):
     query = sqlite_db.sql_find_user_record(message.from_user.id)
-    print(query)
     if query is None:
         await message.answer("Хотите подключиться к караоке?")
     else:
@@ -280,30 +230,7 @@ async def show_my_orders_command(message: types.Message):
                 await message.answer("Ваш список заказов пуст")
 
 
-async def cancel_command(message: types.Message, state: FSMContext):
-    current_state = await state.get_state()
-    if current_state is None:
-        await message.answer("Ok")
-        return None
-    await state.finish()
-    await message.reply("Ok")
-
-
-async def callback_cancel_command(callback: types.CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await cancel_command(callback.message, state)
-
-
 def register_handlers_client(dispatcher: Dispatcher):
-
-    dispatcher.register_callback_query_handler(callback_cancel_command, Text(equals='cancel'))
-    dispatcher.register_message_handler(cancel_command, Text(equals='cancel', ignore_case=True), state='*')
-    dispatcher.register_message_handler(cancel_command, commands=['cancel'], state='*')
-
-    dispatcher.register_message_handler(status_command, Text(equals="Status", ignore_case=True), state='*')
-    dispatcher.register_message_handler(status_command, commands=['status'], state='*')
-
-    dispatcher.register_message_handler(start_command, commands=['start', 'help'], state='*')
 
     dispatcher.register_message_handler(new_karaoke_command, commands=['new_karaoke'])
     # Фильтр для валидации текста

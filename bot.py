@@ -6,6 +6,7 @@ from data_base import sqlite_db
 
 sqlite_db.sql_start()
 
+other.register_handlers_other(dispatcher)
 client.register_handlers_client(dispatcher)
 admin.register_handlers_admin(dispatcher)
 
