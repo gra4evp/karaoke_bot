@@ -9,6 +9,7 @@ import json
 import random
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.utils.markdown import hlink
 
 
 API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
@@ -18,7 +19,6 @@ bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dispatcher = Dispatcher(bot, storage=storage)
 
-counter_no = 0
 counter_yes = 0
 
 user_ids = {}
@@ -45,7 +45,7 @@ def get_unique_links(file_name):
             unique_links.add(link)
     return unique_links
 
-unique_links = get_unique_links('id-url_08_03_2023.txt')
+unique_links = get_unique_links('id_url_all.txt')
 
 links_by_user_id = load_links_by_user_id('links_by_user_id.txt')
 
@@ -102,7 +102,7 @@ async def add_link(message: types.Message, state: FSMContext):
     text = message.text
     if 'https' in text:
         user_ids[user_id].append(text)
-        print(f'{user_id}, {text}')
+        print(f'{user_id}, {text}, {message.date}')
         await message.answer('Success! Sing better than the original, I believe in you 😇')
     else:
         await message.answer('You added the link incorrectly, please try again 😉')
@@ -111,8 +111,6 @@ async def add_link(message: types.Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track'))
 
-    global counter_no
-    counter_no += 1
     links = links_by_user_id.get(str(user_id), None)
     if links is not None:
         try:
@@ -139,10 +137,13 @@ async def handle_link(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     text = callback.message.text.split('\n\n')
 
+
     link = text[0]
     user_ids[user_id].append(text)
-    print(f'{user_id}, {link}')
+    time = callback.message.date
+    print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
+    await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
 
 
 def register_handlers(dispatcher: Dispatcher):
@@ -155,5 +156,3 @@ def register_handlers(dispatcher: Dispatcher):
 if __name__ == "__main__":
     register_handlers(dispatcher)
     executor.start_polling(dispatcher, skip_updates=True)
-    print(f"counter_no: {counter_no}")
-    print(f"counter_yes: {counter_yes}")
