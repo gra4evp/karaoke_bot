@@ -83,6 +83,11 @@ async def sql_update_user_record(user_id: str, active_karaoke: str, karaoke_list
     base.commit()
 
 
+async def sql_update_user_active_karaoke(user_id: str, active_karaoke: str):
+    cur.execute("UPDATE visitors SET active_karaoke == ? WHERE user_id == ?", (active_karaoke, user_id))
+    base.commit()
+
+
 def sql_find_user_record(user_id: str):
     return cur.execute("SELECT active_karaoke, karaoke_list FROM visitors WHERE user_id == ?", (user_id,)).fetchone()
 
