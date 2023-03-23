@@ -36,9 +36,12 @@ async def status_command(message: types.Message, state: FSMContext):
     else:
         owner_text = ''
 
+    len_flag = False
     if user_info is not None:  # если пользователь такой есть
         active_karaoke, karaoke_list = user_info
         karaoke_list = karaoke_list.split('; ')
+        if karaoke_list:
+            len_flag = True
         user_text = "<b>At the moment you are a member of these karaoke:</b>\n- " + '\n- '.join(karaoke_list) + '\n\n'
         user_text += f"<b>Active karaoke:</b>\n🎤 {active_karaoke}"
     else:
@@ -47,7 +50,11 @@ async def status_command(message: types.Message, state: FSMContext):
     text = owner_text + user_text
 
     if text:
-        await message.answer(text, parse_mode='HTML')
+        keyboard = None
+        if len_flag:
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(text='Change active karaoke', callback_data='change_active_karaoke'))
+        await message.answer(text, parse_mode='HTML', reply_markup=keyboard)
     else:
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
@@ -56,6 +63,23 @@ async def status_command(message: types.Message, state: FSMContext):
                              "🖊 Do you want to <b>subscribe</b> to karaoke and order music?",
                              reply_markup=keyboard,
                              parse_mode='HTML')
+
+
+async def callback_change_active_karaoke(callback: types.CallbackQuery):
+    user_info, _ = sqlite_db.sql_get_user_status(callback.from_user.id)
+    if user_info is not None:  # если пользователь такой есть
+        active_karaoke, karaoke_list = user_info
+        karaoke_list = karaoke_list.split('; ')
+
+        keyboard = InlineKeyboardMarkup()
+        for i in range(len(karaoke_list)):
+            karaoke_name = karaoke_list[i]
+            if i % 2 == 0:
+                keyboard.add(InlineKeyboardButton(text=karaoke_name, callback_data='search_karaoke'))
+            else:
+                keyboard.insert(InlineKeyboardButton(text=karaoke_name, callback_data='cancel'))
+            await callback.message.edit_reply_markup(keyboard)
+
 
 
 def register_handlers_other(dispatcher: Dispatcher):
@@ -68,3 +92,4 @@ def register_handlers_other(dispatcher: Dispatcher):
     dispatcher.register_message_handler(status_command, commands=['status'], state='*')
 
     dispatcher.register_message_handler(start_command, commands=['start', 'help'], state='*')
+    dispatcher.register_callback_query_handler(callback_change_active_karaoke, Text(equals='change_active_karaoke'))
