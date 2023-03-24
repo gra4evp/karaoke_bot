@@ -8,7 +8,6 @@ import json
 
 
 def download_video_youtube(url: str):
-    # url = url.replace('&', '"&"')
     outtmpl = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tracks_wav', '%(title)s.%(ext)s')
     cachedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tracks_cache')
     ydl_opts = {
@@ -22,10 +21,18 @@ def download_video_youtube(url: str):
         'cachedir': cachedir,
         'noplaylist': True,
         'extractaudio': True,
-        'no_cache_dir': True
+        'no_cache_dir': True,
+        'quiet': True
     }
     with YoutubeDL(ydl_opts) as ydl:
-        error_code = ydl.download(url)
+        # error_code = ydl.download(url)
+        info = ydl.extract_info(url, download=True)
+
+    # filename = os.path.basename(info['filepath'])
+
+    filename = info.get('title')
+    filename += '.wav'
+    return filename
 
 
 def wav2vec(file_wav):
@@ -60,7 +67,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.subparser_name == 'dwld':
-        download_video_youtube(url=args.link)
+        # print(json.dumps(download_video_youtube(url=args.link), indent=4))
+        print(download_video_youtube(url=args.link))
 
     if args.subparser_name == 'm2v':
         wav2vec(file_wav=args.filepath)
