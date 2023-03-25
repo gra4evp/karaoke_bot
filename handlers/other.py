@@ -25,6 +25,40 @@ async def callback_cancel_command(callback: types.CallbackQuery, state: FSMConte
     await cancel_command(callback.message, state)
 
 
+async def menu_command(message: types.Message, state: FSMContext):
+    await state.finish()
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="My karaoke", callback_data='my_karaoke'))
+    keyboard.insert(InlineKeyboardButton(text="My orders", callback_data='my_orders'))
+    await message.answer('Это ваш кабинет пользователя, что вы хотите сделать?', reply_markup=keyboard)
+
+
+async def callback_my_karaoke(callback: types.CallbackQuery):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Managed", callback_data='managed_karaoke'))
+    keyboard.insert(InlineKeyboardButton(text="Membering", callback_data='membering_karaoke'))
+    keyboard.add(InlineKeyboardButton(text='<< Back to main menu', callback_data='back_to_main_menu'))
+    await callback.message.edit_text('Информация о ваших караоке', reply_markup=keyboard)
+
+
+async def callback_managed_karaoke(callback: types.CallbackQuery):
+    user_info, owner_info = sqlite_db.sql_get_user_status(callback.from_user.id)
+
+    owner_info = [karaoke_name[0] for karaoke_name in owner_info]
+    owner_text = "<b>At the moment you own these karaoke:</b>\n- " + '\n- '.join(owner_info) + '\n\n'
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text='<< Back to karaoke info', callback_data='my_karaoke'))
+    await callback.message.edit_text(owner_text, reply_markup=keyboard)
+
+
+async def callback_back_to_main_menu(callback: types.CallbackQuery):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="My karaoke", callback_data='my_karaoke'))
+    keyboard.insert(InlineKeyboardButton(text="My orders", callback_data='my_orders'))
+    await callback.message.edit_text('Это ваш кабинет пользователя, что вы хотите сделать?', reply_markup=keyboard)
+
+
 async def status_command(message: types.Message, state: FSMContext):
     await state.finish()
 
@@ -103,7 +137,17 @@ def register_handlers_other(dispatcher: Dispatcher):
     dispatcher.register_message_handler(status_command, Text(equals="Status", ignore_case=True), state='*')
     dispatcher.register_message_handler(status_command, commands=['status'], state='*')
 
+    dispatcher.register_message_handler(menu_command, Text(equals="menu", ignore_case=True), state='*')
+    dispatcher.register_message_handler(menu_command, commands=['menu'], state='*')
+
     dispatcher.register_message_handler(start_command, commands=['start', 'help'], state='*')
 
     dispatcher.register_callback_query_handler(callback_change_active_karaoke, Text(equals='change_active_karaoke'))
     dispatcher.register_callback_query_handler(callback_change_to, Text(startswith='change_to'))
+
+    dispatcher.register_callback_query_handler(callback_my_karaoke, Text(equals='my_karaoke'))
+    dispatcher.register_callback_query_handler(callback_back_to_main_menu, Text(equals='back_to_main_menu'))
+    dispatcher.register_callback_query_handler(callback_managed_karaoke, Text(equals='managed_karaoke'))
+
+
+
