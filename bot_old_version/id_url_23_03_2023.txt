@@ -1,0 +1,93 @@
+1083764760, https://youtu.be/RhQlrJMZhf0
+1190289300, https://youtu.be/OM_AfTRA68Y
+375571119, https://www.youtube.com/watch?v=utrkSO68KrE&ab_channel=Geoffplaysguitar-Topic
+208361769, https://youtu.be/ioqGmaBHUrk
+1083764760, https://youtu.be/W19rcp-doJ4
+1083764760, https://youtu.be/bMiydIZ4fvo
+1190289300, https://youtu.be/TE30l2cScbA
+1083764760, https://youtu.be/yH2mILMKC-0
+1190289300, https://youtu.be/-T5qeByAfA8
+208361769, https://youtu.be/AS6miOz7xO0
+1086111198, https://youtu.be/m8AY5h1uVQo
+1083764760, https://youtu.be/_4hTPqABZNc
+400971250, https://youtu.be/JAaugGHMQXc
+625885058, https://youtu.be/m8CEEkqQiiY
+5072644018, https://youtu.be/dKHgqVOAOJ4
+5072644018, https://youtu.be/52WbRVGAUBI
+5890369738, https://youtu.be/7DzQs7dpNL8
+5072644018, https://youtu.be/c1X3Lg7RVkk
+400971250, https://youtu.be/BP-LutXnC24
+1190289300, https://youtu.be/TE30l2cScbA
+400971250, https://youtu.be/gf0taQyr0E0
+65903610, https://x-minus.club/track/180988/ive-told-every-little-star
+400971250, https://youtu.be/kz-pGkTjbYM
+40564040, https://youtu.be/ra3UzdpfoBg
+208361769, https://youtu.be/bY82VqRnqu0
+2112047662, https://youtu.be/9Ht5RZpzPqw
+5751390028, https://youtu.be/0ih6b17zRM0
+5072644018, https://youtu.be/_BISsXLoMsY
+48856678, https://youtu.be/uW4aAxo2L0M
+1070387959, https://youtu.be/qELxGX4VJH8
+48856678, https://youtu.be/dp4ZB0j70Y8
+5974130131, https://youtu.be/CKiE9P7KAdA
+625885058, https://youtu.be/qaWxDssHOaM
+625885058, https://youtu.be/qaWxDssHOaM {datetime.datetime(2023, 3, 22, 23, 1, 39, 900211, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+625885058, https://youtu.be/m8CEEkqQiiY {datetime.datetime(2023, 3, 22, 23, 2, 3, 452938, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+288565944, https://youtu.be/aOeuCJraDK0
+208361769, https://youtu.be/ixGt1ajjOyA
+1070387959, https://youtu.be/2FLydAjPdFY
+400971250, https://youtu.be/19Kju46x324
+1732255675, https://youtu.be/v5NEKPpISKY
+186662817, https://youtu.be/BliQLvRf2EI
+186662817, https://youtu.be/0piety8YJIg
+134566371, https://youtu.be/RtusJQ3dL_g
+134566371, https://www.youtube.com/watch?v=NvgR7xpJWd4 {datetime.datetime(2023, 3, 22, 23, 10, 44, 452982, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+186662817, https://youtu.be/l9zhykWCxHE
+1083764760, https://youtu.be/c1X3Lg7RVkk
+569823451, https://youtu.be/IBnbOEGv5MM
+569823451, https://youtu.be/ICfV40BUdHQ {datetime.datetime(2023, 3, 22, 23, 14, 21, 717117, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+956955911, https://youtu.be/a3vO3thiYV4 {datetime.datetime(2023, 3, 22, 23, 14, 35, 932889, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+956955911, https://youtu.be/6w5jTkaSvd8
+2112047662, https://youtu.be/WCWHVRaBtLg
+956955911, https://youtu.be/G3IEOueOCO0 {datetime.datetime(2023, 3, 22, 23, 17, 33, 828115, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+5394890891, https://youtu.be/-ReBgL0Zje4
+5974130131, https://youtu.be/u_072m3oWT0 {datetime.datetime(2023, 3, 22, 23, 18, 23, 417757, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+956955911, https://youtu.be/E4i3Crw6Qws
+1271068603, https://youtu.be/5qF_qbaWt3Q
+1271068603, https://youtu.be/5qF_qbaWt3Q
+208361769, https://youtu.be/V_kVQzRj9SQ
+1083764760, https://youtu.be/tPWU56optms
+1083764760, https://youtu.be/194vWFCy6F4
+356741694, https://youtu.be/JtiocB8PYPs
+40564040, https://youtu.be/IzDq4hWPpBU
+1316790717, https://youtu.be/a97SyvqSvA8
+1083764760, https://youtu.be/Ep6G3P2v5ZA
+1083764760, https://youtu.be/8vFVpwK555M
+288565944, https://youtu.be/sZGGsd_-V9k
+1086111198, https://youtu.be/8kotNQ07ZEw
+394215470, https://youtu.be/g6-vxN0ZlUY
+394215470, https://youtu.be/OfWFfthYuW0 {datetime.datetime(2023, 3, 22, 23, 52, 49, 320019, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+394215470, https://youtu.be/V4arrssKggM {datetime.datetime(2023, 3, 22, 23, 53, 33, 135923, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+134566371, https://youtu.be/rtKLTEyyCts
+40564040, https://youtu.be/j_1_oEyZM38
+1018509531, https://youtu.be/PrwIQFvgj44
+1018509531, https://youtu.be/s9Qc54Jp-6M {datetime.datetime(2023, 3, 23, 0, 3, 58, 33889, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+1018509531, https://youtu.be/gKjIiaAXfDs
+134566371, https://youtu.be/XTTyBLD2PXo
+1111877819, https://youtu.be/pqOoCpQyoQk
+625885058, https://youtu.be/qaWxDssHOaM {datetime.datetime(2023, 3, 23, 0, 24, 38, 259286, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+625885058, https://youtu.be/cJ-tBdK2d0k
+625885058, https://m.youtube.com/watch?v=tSV7Hcnj6Oc {datetime.datetime(2023, 3, 23, 0, 24, 49, 633929, tzinfo=<DstTzInfo 'Asia/Yerevan' +04+4:00:00 STD>)}
+5751390028, https://youtu.be/gDeb_N8mQSY
+93689687, https://youtu.be/nEdtf0k4mOw
+1310819115, https://youtube.com/watch?v=c8wn2fMYvns&si=EnSIkaIECMiOmarE
+5751390028, https://youtu.be/gDeb_N8mQSY
+1271068603, https://youtu.be/HeK_Rb9Mkg0
+1732255675, https://youtu.be/fYFZf3d2opk
+1732255675, https://youtu.be/fYFZf3d2opk
+400971250, https://youtu.be/J69BlaSWaMw
+1018509531, https://youtu.be/J3Z_IQY26CA
+48856678, https://youtu.be/1TIeDbnzp9M
+1083764760, https://youtu.be/prgoLEZTit0
+48856678, https://youtu.be/mTMOr8PAj1o
+414170765, https://youtu.be/7hB7CVsDPb0
