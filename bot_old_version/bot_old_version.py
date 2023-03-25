@@ -23,7 +23,8 @@ counter_yes = 0
 
 user_ids = {}
 queue_ids = []
-admin_id = 1206756552
+# admin_id = 1206756552
+admin_id = 345705084
 # admin_id = 375571119  # мой айди
 
 
@@ -81,9 +82,10 @@ async def text(message: types.Message):
 
     if message.text == 'Get next link round':
         counter_empty = 0
-        for user_id, list_links in user_ids.items():
+        for user_id, value in user_ids.items():
+            list_links, username = value
             if len(list_links):
-                await bot.send_message(admin_id, list_links.pop(0))
+                await bot.send_message(admin_id, f"{list_links.pop(0)}\n@{username}")
             else:
                 counter_empty += 1
 
@@ -97,11 +99,11 @@ async def add_link(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
 
     if user_id not in user_ids:
-        user_ids[user_id] = []
+        user_ids[user_id] = ([], message.from_user.username)
 
     text = message.text
     if 'https' in text:
-        user_ids[user_id].append(text)
+        user_ids[user_id][0].append(text)
         print(f'{user_id}, {text}, {message.date}')
         await message.answer('Success! Sing better than the original, I believe in you 😇')
     else:
@@ -139,7 +141,7 @@ async def handle_link(callback: types.CallbackQuery):
 
 
     link = text[0]
-    user_ids[user_id].append(text)
+    user_ids[user_id][0].append(text)
     time = callback.message.date
     print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
