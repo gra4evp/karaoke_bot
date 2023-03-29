@@ -23,9 +23,9 @@ counter_yes = 0
 
 user_ids = {}
 queue_ids = []
-# admin_id = 1206756552
-admin_id = 345705084
-# admin_id = 375571119  # мой айди
+# admin_id = 1206756552  # владелец бара
+admin_id = 345705084  # kuks_51
+# admin_id = 375571119  # gra4evp
 
 
 class FSMOrderTrack(StatesGroup):
@@ -56,6 +56,7 @@ async def start(message: types.Message):
 
     if message.from_user.id != admin_id:
         markup.add(KeyboardButton("I want to sing a song"))
+        markup.add(KeyboardButton("Join a group of karaoke lovers"))
     else:
         markup.add(KeyboardButton("The Venue"))
         markup.add(KeyboardButton("Bowie Jan"))
@@ -85,7 +86,8 @@ async def text(message: types.Message):
         for user_id, value in user_ids.items():
             list_links, username = value
             if len(list_links):
-                await bot.send_message(admin_id, f"{list_links.pop(0)}\n@{username}")
+                await bot.send_message(admin_id, f"{hlink('Track', list_links.pop(0))} ordered by @{username}",
+                                       parse_mode='HTML')
             else:
                 counter_empty += 1
 
@@ -141,11 +143,15 @@ async def handle_link(callback: types.CallbackQuery):
 
 
     link = text[0]
-    user_ids[user_id][0].append(text)
+    user_ids[user_id][0].append(link)
     time = callback.message.date
     print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
     await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
+
+
+async def join_a_group(message: types.Message):
+    await message.answer('https://t.me/+JPb01AZkQgxkOGMy')
 
 
 def register_handlers(dispatcher: Dispatcher):
@@ -153,6 +159,7 @@ def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(text, content_types=['text'])
     dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
     dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
+    dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
 
 
 if __name__ == "__main__":
