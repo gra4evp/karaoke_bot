@@ -23,8 +23,8 @@ counter_yes = 0
 
 user_ids = {}
 queue_ids = []
-# admin_id = 1206756552  # владелец бара
-admin_id = 345705084  # kuks_51
+admin_id = 1206756552  # владелец бара
+# admin_id = 345705084  # kuks_51
 # admin_id = 375571119  # gra4evp
 
 
@@ -156,10 +156,11 @@ async def join_a_group(message: types.Message):
 
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(start, commands=['start'])
+    dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
     dispatcher.register_message_handler(text, content_types=['text'])
     dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
     dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
-    dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
+
 
 
 if __name__ == "__main__":
