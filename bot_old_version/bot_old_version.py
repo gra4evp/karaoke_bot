@@ -23,8 +23,9 @@ counter_yes = 0
 
 user_ids = {}
 queue_ids = []
-admin_id = 1206756552
-# admin_id = 375571119  # мой айди
+# admin_id = 1206756552  # владелец бара
+admin_id = 345705084  # kuks_51
+# admin_id = 375571119  # gra4evp
 
 
 class FSMOrderTrack(StatesGroup):
@@ -84,7 +85,8 @@ async def text(message: types.Message):
         for user_id, value in user_ids.items():
             list_links, username = value
             if len(list_links):
-                await bot.send_message(admin_id, f"{hlink('Track', list_links.pop(0))} ordered by {username}")
+                await bot.send_message(admin_id, f"{hlink('Track', list_links.pop(0))} ordered by @{username}",
+                                       parse_mode='HTML')
             else:
                 counter_empty += 1
 
@@ -140,7 +142,7 @@ async def handle_link(callback: types.CallbackQuery):
 
 
     link = text[0]
-    user_ids[user_id][0].append(text)
+    user_ids[user_id][0].append(link)
     time = callback.message.date
     print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
