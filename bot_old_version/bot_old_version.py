@@ -56,6 +56,7 @@ async def start(message: types.Message):
 
     if message.from_user.id != admin_id:
         markup.add(KeyboardButton("I want to sing a song"))
+        markup.add(KeyboardButton("Join a group of karaoke lovers"))
     else:
         markup.add(KeyboardButton("The Venue"))
         markup.add(KeyboardButton("Bowie Jan"))
@@ -149,11 +150,16 @@ async def handle_link(callback: types.CallbackQuery):
     await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
 
 
+async def join_a_group(message: types.Message):
+    await message.answer('https://t.me/+JPb01AZkQgxkOGMy')
+
+
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(start, commands=['start'])
     dispatcher.register_message_handler(text, content_types=['text'])
     dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
     dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
+    dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
 
 
 if __name__ == "__main__":
