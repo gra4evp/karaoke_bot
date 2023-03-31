@@ -1,11 +1,13 @@
 from yt_dlp import YoutubeDL
-from typing import List, Dict
+from typing import Dict, Type
+from .track_status import TrackStatus, TrackWaited
 
 
 class Track:
 
     def __init__(self, url):
         self.url = url
+        self.status: Type[TrackStatus] = TrackWaited
         self.info: Dict[str, str] = {}
 
     def get_info(self):
