@@ -1,70 +1,6 @@
-from typing import List, Dict
 from collections import deque
 from aiogram.types import User
-from yt_dlp import YoutubeDL
-
-
-class Track:
-
-    def __init__(self, url):
-        self.url = url
-        self.info: Dict[str, str] = {}
-
-    def get_info(self):
-        raise NotImplementedError
-
-    def __str__(self):
-        pass
-
-    def __repr__(self):
-        pass
-
-
-class YouTubeTrack(Track):
-
-    def __init__(self, url: str):
-        super().__init__(url)
-
-    def get_info(self) -> Dict[str, str]:
-        if not self.info:
-            ydl_opts = {'quiet': True}
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(self.url, download=False)
-                self.info = {
-                    'video_id': info.get('id', ''),
-                    'title': info.get('title', ''),
-                    'uploader': info.get('uploader', ''),
-                    'description': info.get('description', ''),
-                    'duration': info.get('duration', 0),
-                    'view_count': info.get('view_count', 0),
-                    'like_count': info.get('like_count', 0),
-                    'comment_count': info.get('comment_count', 0),
-                    'categories': info.get('categories', [])
-                }
-        return self.info
-
-    def __str__(self) -> str:
-        return f"YouTubeTrack: title - {self.info['title']} id - {self.info['video_id']}"
-
-    def __repr__(self) -> str:
-        return f"YouTubeTrack(url='{self.url}')"
-
-
-class XMinusTrack(Track):
-    def __init__(self, url: str):
-        super().__init__(url)
-
-    def get_info(self):
-        if not self.info:
-            # логика для получения информации о треке на xminus.com
-            pass
-        return self.info
-
-    def __str__(self) -> str:
-        return f"XMinusTrack: url - {self.url}"
-
-    def __repr__(self) -> str:
-        return f"XMinusTrack(url='{self.url}')"
+from .types import Track, YouTubeTrack, XMinusTrack
 
 
 class KaraokeUser:
@@ -95,6 +31,10 @@ class KaraokeUser:
     def pop_next_track(self):
         return self.track_queue.popleft() if self.track_queue else None
 
+    def del_track_from_queue(self, index: int):
+        del self.track_queue[index]
+        self.track_queue_index =- 1
+
     @staticmethod
     def get_track_instance(track_url):
         if 'youtube.com' in track_url or 'youtu.be' in track_url:
@@ -117,6 +57,7 @@ class Karaoke:
         self.user_queue: deque[KaraokeUser] = deque()
         self.user_queue_index: int = 0
         self.track_queue_index: int = 0
+        self.track_num: int = 1
 
     def show_next_user(self):
         if not self.user_queue:  # user_queue is empty
@@ -129,22 +70,44 @@ class Karaoke:
             self.user_queue_index = 0
         return user
 
-    def get_next_round_queue(self) -> List:
-        if not self.user_queue:
-            return None
+    # def get_next_round_queue(self) -> List:
+    #     if not self.user_queue:
+    #         return None
+    #
+    #     max_queue_index = max(user.track_queue_index for user in self.user_queue)
+    #     if max_queue_index == 0:
+    #         self.track_queue_index = 0
+    #
+    #     users_tracks = []
+    #     for user in self.user_queue:
+    #         if user.track_queue_index == max_queue_index:
+    #             track = user.show_next_track()
+    #             if track is not None:
+    #                 self.track_queue_index += 1
+    #                 users_tracks.append((self.track_queue_index, user, track))
+    #     return users_tracks
 
-        max_queue_index = max(user.track_queue_index for user in self.user_queue)
-        if max_queue_index == 0:
-            self.track_queue_index = 0
+    def get_next_round_queue(self):
+        round = self.get_round_queue_by_index(self.track_queue_index)
 
-        users_tracks = []
+        if round:
+            self.track_queue_index += 1
+        else:  # Или треков больше нет или мы попали в конец очереди
+            round = self.get_round_queue_by_index(0)
+            self.track_queue_index = 1 if round else 0
+
+        return round
+
+    def get_round_queue_by_index(self, index):
+        round = []
         for user in self.user_queue:
-            if user.track_queue_index == max_queue_index:
-                track = user.show_next_track()
-                if track is not None:
-                    self.track_queue_index += 1
-                    users_tracks.append((self.track_queue_index, user, track))
-        return users_tracks
+            try:
+                track = user.track_queue[index]
+                round.append((self.track_num, user, track))
+                self.track_num += 1
+            except IndexError:
+                self.track_num = 1
+        return round
 
     def add_user_to_queue(self, user: KaraokeUser):
         if not isinstance(user, KaraokeUser):
