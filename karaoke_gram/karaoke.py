@@ -1,38 +1,36 @@
 from collections import deque
 from aiogram.types import User
-from .types import Track, YouTubeTrack, XMinusTrack
+from typing import Type, List
+from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
 
 
 class KaraokeUser:
 
-    def __init__(self, user: User):
-        self.aiogram_user = user
-        self.track_queue: deque[Track] = deque()
-        self.track_queue_index: int = 0
+    def __init__(self, aiogram_user: User):
+        self.aiogram_user = aiogram_user
+        self.playlist: List[Track] = []
+        self.next_track_waited = self.get_next_track_with_status(TrackWaited)
+        self.condition_issuing_tracks = True
 
-    def show_next_track(self):
-        if not self.track_queue:  # track_queue is empty
-            return None
-
-        track = self.track_queue[self.track_queue_index]
-        self.track_queue_index += 1
-
-        if self.track_queue_index > len(self.track_queue) - 1:  # last_index
-            self.track_queue_index = 0
-
-        return track
+    def get_next_track_with_status(self, status: Type[TrackStatus]):
+        while True:
+            for track in self.playlist:
+                if isinstance(track.status, status):
+                    yield track
+            while self.condition_issuing_tracks:
+                yield None
 
     def add_track_to_queue(self, track_url):
         if not isinstance(track_url, str):
             raise ValueError("Url should be an instance of <str>")
         track = self.get_track_instance(track_url)
-        self.track_queue.append(track)
+        self.playlist.append(track)
 
     def pop_next_track(self):
-        return self.track_queue.popleft() if self.track_queue else None
+        return self.playlist.popleft() if self.playlist else None
 
     def del_track_from_queue(self, index: int):
-        del self.track_queue[index]
+        del self.playlist[index]
         self.track_queue_index =- 1
 
     @staticmethod
@@ -44,7 +42,7 @@ class KaraokeUser:
             return XMinusTrack(track_url)
 
     def __str__(self):
-        return f"KaraokeUser(user={self.aiogram_user}, track_queue={list(self.track_queue)})"
+        return f"KaraokeUser(user={self.aiogram_user}, track_queue={list(self.playlist)})"
 
     def __repr__(self):
         return self.__str__()
@@ -54,60 +52,36 @@ class Karaoke:
     def __init__(self, name: str, owner_id: int):
         self.name = name
         self.owner_id = owner_id
-        self.user_queue: deque[KaraokeUser] = deque()
-        self.user_queue_index: int = 0
-        self.track_queue_index: int = 0
+        self.user_queue: List[KaraokeUser] = []
         self.track_num: int = 1
+        self.next_round = self.get_next_round()
 
-    def show_next_user(self):
-        if not self.user_queue:  # user_queue is empty
-            return None
+    def get_next_round(self):
+        while True:
+            round_queue = self.get_next_round_queue()
 
-        user = self.user_queue[self.user_queue_index]
-        self.user_queue_index += 1
-
-        if self.user_queue_index > len(self.user_queue) - 1:
-            self.user_queue_index = 0
-        return user
-
-    # def get_next_round_queue(self) -> List:
-    #     if not self.user_queue:
-    #         return None
-    #
-    #     max_queue_index = max(user.track_queue_index for user in self.user_queue)
-    #     if max_queue_index == 0:
-    #         self.track_queue_index = 0
-    #
-    #     users_tracks = []
-    #     for user in self.user_queue:
-    #         if user.track_queue_index == max_queue_index:
-    #             track = user.show_next_track()
-    #             if track is not None:
-    #                 self.track_queue_index += 1
-    #                 users_tracks.append((self.track_queue_index, user, track))
-    #     return users_tracks
+            if not round_queue:  # либо конец очереди, либо треков вообще нет
+                # организовать удаление
+                self.change_condition_issuing_tracks(False)
+                round_queue = self.get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
+                self.change_condition_issuing_tracks(True)
+            yield round_queue
 
     def get_next_round_queue(self):
-        round = self.get_round_queue_by_index(self.track_queue_index)
-
-        if round:
-            self.track_queue_index += 1
-        else:  # Или треков больше нет или мы попали в конец очереди
-            round = self.get_round_queue_by_index(0)
-            self.track_queue_index = 1 if round else 0
-
-        return round
-
-    def get_round_queue_by_index(self, index):
-        round = []
+        round_queue = []
         for user in self.user_queue:
-            try:
-                track = user.track_queue[index]
-                round.append((self.track_num, user, track))
-                self.track_num += 1
-            except IndexError:
-                self.track_num = 1
-        return round
+            track = next(user.next_track_waited)
+            if track is not None:
+                round_queue.append((user, track))
+            # try:
+            #     round_queue.append((user, next(user.next_track_waited)))
+            # except StopIteration:
+            #     pass
+        return round_queue
+
+    def change_condition_issuing_tracks(self, condition: bool):
+        for user in self.user_queue:
+            user.condition_issuing_tracks = condition
 
     def add_user_to_queue(self, user: KaraokeUser):
         if not isinstance(user, KaraokeUser):

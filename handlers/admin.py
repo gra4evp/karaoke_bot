@@ -5,6 +5,7 @@ from aiogram.utils.markdown import hlink
 from karaoke_gram.karaoke import ready_to_play_karaoke_list
 # from keyboards.admin_keyboards import inline_admin_keyboard as keyboard
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from karaoke_gram.types import TrackRemoved
 
 
 async def show_queue_command(message: types.Message):
@@ -16,7 +17,7 @@ async def show_queue_command(message: types.Message):
                 no_more_tracks = 0
                 for user in karaoke.user_queue:
                     try:
-                        track = user.track_queue[index]
+                        track = user.playlist[index]
                         track_number += 1
                         keyboard = InlineKeyboardMarkup()
                         keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
@@ -38,7 +39,8 @@ async def show_queue_command(message: types.Message):
 async def show_circular_queue_command(message: types.Message):
     for karaoke in ready_to_play_karaoke_list:
         if karaoke.owner_id == message.from_user.id:
-            for track_number, user, track in karaoke.get_next_round_queue():
+            for user, track in next(karaoke.next_round):
+                track_number = 1
                 index = track_number - 1
                 keyboard = InlineKeyboardMarkup()
                 keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
@@ -61,7 +63,7 @@ async def callback_remove_from_queue(callback: types.CallbackQuery):
             for user in karaoke.user_queue:
                 if int(user_id) == user.aiogram_user.id:
                     try:
-                        del user.track_queue[int(index)]
+                        user.playlist[int(index)].status = TrackRemoved()
                         await callback.answer()
                         await callback.message.edit_text(callback.message.text + f"\nTrack status: ❌ Removed",
                                                          parse_mode='HTML')
