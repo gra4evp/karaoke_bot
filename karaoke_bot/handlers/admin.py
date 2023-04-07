@@ -2,10 +2,10 @@ from aiogram import Dispatcher
 from aiogram import types
 from aiogram.dispatcher.filters import Text
 from aiogram.utils.markdown import hlink
-from karaoke_gram.karaoke import ready_to_play_karaoke_list
+from karaoke_bot.karaoke_gram.karaoke import ready_to_play_karaoke_list
 # from keyboards.admin_keyboards import inline_admin_keyboard as keyboard
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from karaoke_gram.types import TrackRemoved
+from karaoke_bot.karaoke_gram.types import TrackRemoved
 
 
 async def show_queue_command(message: types.Message):

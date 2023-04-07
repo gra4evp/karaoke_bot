@@ -1,10 +1,10 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from keyboards import other_keyboard
+from karaoke_bot.keyboards import other_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config import START_TEXT
+from karaoke_bot.config import START_TEXT
 
 
 async def start_command(message: types.Message):

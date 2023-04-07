@@ -1,13 +1,13 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
-from create_bot import dispatcher, bot
+from karaoke_bot.states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
+from karaoke_bot.create_bot import bot
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
-from karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
+from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 
 
 async def new_karaoke_command(message: types.Message):
