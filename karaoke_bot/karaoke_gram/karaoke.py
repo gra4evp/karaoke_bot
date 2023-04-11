@@ -12,7 +12,7 @@ class KaraokeUser:
         self.next_track_waited = self.get_next_track_with_status(TrackWaited)
         self.condition_issuing_tracks = True
 
-    def get_next_track_with_status(self, status: Type[TrackStatus]):
+    def get_next_track_with_status(self, status: Type[TrackStatus]) -> Track:
         while True:
             for track in self.playlist:
                 if isinstance(track.status, status):
@@ -20,7 +20,7 @@ class KaraokeUser:
             while self.condition_issuing_tracks:
                 yield None
 
-    def add_track_to_queue(self, track_url):
+    def add_track_to_queue(self, track_url: str):
         if not isinstance(track_url, str):
             raise ValueError("Url should be an instance of <str>")
         track = self.get_track_instance(track_url)
@@ -34,7 +34,7 @@ class KaraokeUser:
         self.track_queue_index =- 1
 
     @staticmethod
-    def get_track_instance(track_url):
+    def get_track_instance(track_url: str):
         if 'youtube.com' in track_url or 'youtu.be' in track_url:
             return YouTubeTrack(track_url)
 
@@ -62,9 +62,9 @@ class Karaoke:
 
             if not round_queue:  # либо конец очереди, либо треков вообще нет
                 # организовать удаление
-                self.change_condition_issuing_tracks(False)
+                self._change_condition_issuing_tracks(False)
                 round_queue = self.get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
-                self.change_condition_issuing_tracks(True)
+                self._change_condition_issuing_tracks(True)
             yield round_queue
 
     def get_next_round_queue(self):
@@ -79,7 +79,7 @@ class Karaoke:
             #     pass
         return round_queue
 
-    def change_condition_issuing_tracks(self, condition: bool):
+    def _change_condition_issuing_tracks(self, condition: bool):
         for user in self.user_queue:
             user.condition_issuing_tracks = condition
 
@@ -122,4 +122,4 @@ def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: 
     print(ready_to_play_karaoke_list)
 
 
-ready_to_play_karaoke_list: deque[Karaoke] = deque()
+ready_to_play_karaoke_list: List[Karaoke] = []
