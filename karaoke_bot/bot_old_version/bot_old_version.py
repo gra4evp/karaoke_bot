@@ -46,8 +46,8 @@ def get_unique_links(file_name):
             unique_links.add(link)
     return unique_links
 
-unique_links = get_unique_links('id_url_all.txt')
 
+unique_links = get_unique_links('id_url_all.txt')
 links_by_user_id = load_links_by_user_id('links_by_user_id.txt')
 
 
@@ -113,23 +113,25 @@ async def add_link(message: types.Message, state: FSMContext):
 
     # ---------------------------------------------------------------------------------------------------------
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track'))
 
     links = links_by_user_id.get(str(user_id), None)
     if links is not None:
         try:
             random_index = random.randint(0, len(links) - 1)
             link = links.pop(random_index)
+            keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track user_link'))
             await message.answer(f"{link}\n\nTest recomendation\nYou previously ordered this track",
                                  reply_markup=keyboard,
                                  parse_mode='HTML')
         except:
             link = random.choice(list(unique_links))
+            keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track random_link'))
             await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
                                  reply_markup=keyboard,
                                  parse_mode='HTML')
     else:
         link = random.choice(list(unique_links))
+        keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track user_link'))
         await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
                              reply_markup=keyboard,
                              parse_mode='HTML')
@@ -138,14 +140,16 @@ async def add_link(message: types.Message, state: FSMContext):
 async def handle_link(callback: types.CallbackQuery):
     global counter_yes
     counter_yes += 1
+
+    type_link = callback.data.replace('order_this_track ', '')
+
     user_id = callback.from_user.id
     text = callback.message.text.split('\n\n')
-
 
     link = text[0]
     user_ids[user_id][0].append(link)
     time = callback.message.date
-    print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}')
+    print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}, type_link: {type_link}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
     await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
 
@@ -160,7 +164,6 @@ def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(text, content_types=['text'])
     dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
     dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
-
 
 
 if __name__ == "__main__":
