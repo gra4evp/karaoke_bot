@@ -95,29 +95,18 @@ async def add_link(message: types.Message, state: FSMContext):
         await message.answer('You added the link incorrectly, please try again 😉')
 
     # ---------------------------------------------------------------------------------------------------------
-    keyboard = InlineKeyboardMarkup()
-
-    links = links_by_user_id.get(str(user_id), None)
-    if links is not None:
-        try:
-            random_index = random.randint(0, len(links) - 1)
-            link = links.pop(random_index)
-            keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track user_link'))
-            await message.answer(f"{link}\n\nTest recomendation\nYou previously ordered this track",
-                                 reply_markup=keyboard,
-                                 parse_mode='HTML')
-        except:
-            link = random.choice(list(unique_links))
-            keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track random_link'))
-            await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
-                                 reply_markup=keyboard,
-                                 parse_mode='HTML')
+    links = links_by_user_id.get(str(user_id))
+    if links:
+        link = links.pop(random.randint(0, len(links) - 1))
+        callback_data = 'order_this_track user_link'
     else:
         link = random.choice(list(unique_links))
-        keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track random_link'))
-        await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
-                             reply_markup=keyboard,
-                             parse_mode='HTML')
+        callback_data = 'order_this_track random_link'
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Order this track", callback_data=callback_data))
+
+    await message.answer(f"{link}\n\nTest recomendation", reply_markup=keyboard, parse_mode='HTML')
 
 
 async def handle_link(callback: types.CallbackQuery):
