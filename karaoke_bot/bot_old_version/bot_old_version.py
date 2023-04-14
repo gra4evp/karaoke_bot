@@ -1,16 +1,14 @@
 from aiogram.utils import executor
-from aiogram import Bot
+from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
-from aiogram import types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove,\
     InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.dispatcher.filters import Text
-import json
 import random
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hlink
-
+from karaoke_bot.bot_old_version.random_recomendation import load_links_by_user_id, get_unique_links
 
 API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
 # API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
@@ -30,21 +28,6 @@ admin_id = 1206756552  # владелец бара
 
 class FSMOrderTrack(StatesGroup):
     track_url = State()
-
-
-def load_links_by_user_id(input_file_name):
-    with open(input_file_name, 'r') as f:
-        links_by_user_id = json.load(f)
-    return links_by_user_id
-
-
-def get_unique_links(file_name):
-    unique_links = set()
-    with open(file_name, 'r') as f:
-        for line in f:
-            _, link = line.strip().split(', ')
-            unique_links.add(link)
-    return unique_links
 
 
 unique_links = get_unique_links('id_url_all.txt')
@@ -131,7 +114,7 @@ async def add_link(message: types.Message, state: FSMContext):
                                  parse_mode='HTML')
     else:
         link = random.choice(list(unique_links))
-        keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track user_link'))
+        keyboard.add(InlineKeyboardButton(text="Order this track", callback_data='order_this_track random_link'))
         await message.answer(f"{link}\n\nTest recomendation\nRandom recommendation",
                              reply_markup=keyboard,
                              parse_mode='HTML')
@@ -163,7 +146,7 @@ def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
     dispatcher.register_message_handler(text, content_types=['text'])
     dispatcher.register_message_handler(add_link, state=FSMOrderTrack.track_url)
-    dispatcher.register_callback_query_handler(handle_link, Text(equals='order_this_track'))
+    dispatcher.register_callback_query_handler(handle_link, Text(startswith='order_this_track'))
 
 
 if __name__ == "__main__":
