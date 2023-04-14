@@ -1,13 +1,13 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
-from create_bot import dispatcher, bot
+from karaoke_bot.states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
+from karaoke_bot.create_bot import bot
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
-from karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
+from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 
 
 async def new_karaoke_command(message: types.Message):
@@ -204,13 +204,13 @@ async def show_my_orders_command(message: types.Message):
             await message.answer("🗒 You haven't ordered any tracks yet")
         else:
             user = karaoke.find_user(message.from_user.id)
-            queue_length = len(user.track_queue)
+            queue_length = len(user.playlist)
             if queue_length:
                 for i in range(queue_length):
                     keyboard = InlineKeyboardMarkup()
                     keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                     keyboard.insert(InlineKeyboardButton(text="❌ Remove", callback_data=f'rm_track'))
-                    await message.answer(f"{i + 1}. {hlink('Track', user.track_queue[i].url)}\n"
+                    await message.answer(f"{i + 1}. {hlink('Track', user.playlist[i].url)}\n"
                                          f"Karaoke: {karaoke.name}",
                                          reply_markup=keyboard,
                                          parse_mode='HTML')
