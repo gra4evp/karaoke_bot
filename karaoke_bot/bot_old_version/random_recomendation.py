@@ -43,10 +43,6 @@ def get_unique_links(file_name):
     return unique_links
 
 
-def get_random_link(unique_links: set):
-    return random.choice(list(unique_links))
-
-
 if __name__ == "__main__":
     links_by_user_id = get_links_by_user_id('id_url_all.txt')
     display_dict_as_json(links_by_user_id)
