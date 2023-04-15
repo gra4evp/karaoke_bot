@@ -1,4 +1,3 @@
-from collections import deque
 from aiogram.types import User
 from typing import Type, List
 from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
@@ -6,45 +5,44 @@ from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
 
 class KaraokeUser:
 
-    def __init__(self, aiogram_user: User):
+    def __init__(self, aiogram_user: User) -> None:
         self.aiogram_user = aiogram_user
         self.playlist: List[Track] = []
         self.next_track_waited = self.get_next_track_with_status(TrackWaited)
-        self.condition_issuing_tracks = True
+        self._switch_to_yield_none = True
 
     def get_next_track_with_status(self, status: Type[TrackStatus]) -> Track:
         while True:
             for track in self.playlist:
                 if isinstance(track.status, status):
                     yield track
-            while self.condition_issuing_tracks:
+            while self._switch_to_yield_none:
                 yield None
 
-    def add_track_to_queue(self, track_url: str):
+    def yield_none_switcher(self, switch: bool) -> None:
+        self._switch_to_yield_none = switch
+
+    def add_track_to_queue(self, track_url: str) -> None:
         if not isinstance(track_url, str):
             raise ValueError("Url should be an instance of <str>")
         track = self.get_track_instance(track_url)
         self.playlist.append(track)
 
-    def pop_next_track(self):
-        return self.playlist.popleft() if self.playlist else None
-
-    def del_track_from_queue(self, index: int):
-        del self.playlist[index]
-        self.track_queue_index =- 1
+    def pop_next_track(self) -> Track:
+        return self.playlist.pop(0) if self.playlist else None
 
     @staticmethod
-    def get_track_instance(track_url: str):
+    def get_track_instance(track_url: str) -> Track:
         if 'youtube.com' in track_url or 'youtu.be' in track_url:
             return YouTubeTrack(track_url)
 
         if 'xminus.me' in track_url:
             return XMinusTrack(track_url)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"KaraokeUser(user={self.aiogram_user}, track_queue={list(self.playlist)})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
 
@@ -62,9 +60,9 @@ class Karaoke:
 
             if not round_queue:  # либо конец очереди, либо треков вообще нет
                 # организовать удаление
-                self._change_condition_issuing_tracks(False)
+                self._yield_none_switcher(False)
                 round_queue = self.get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
-                self._change_condition_issuing_tracks(True)
+                self._yield_none_switcher(True)
             yield round_queue
 
     def get_next_round_queue(self):
@@ -73,23 +71,19 @@ class Karaoke:
             track = next(user.next_track_waited)
             if track is not None:
                 round_queue.append((user, track))
-            # try:
-            #     round_queue.append((user, next(user.next_track_waited)))
-            # except StopIteration:
-            #     pass
         return round_queue
 
-    def _change_condition_issuing_tracks(self, condition: bool):
+    def _yield_none_switcher(self, switch: bool) -> None:
         for user in self.user_queue:
-            user.condition_issuing_tracks = condition
+            user.yield_none_switcher(switch)
 
-    def add_user_to_queue(self, user: KaraokeUser):
+    def add_user_to_queue(self, user: KaraokeUser) -> None:
         if not isinstance(user, KaraokeUser):
             raise ValueError("User should be an instance of KaraokeUser")
         self.user_queue.append(user)
 
     def pop_next_user(self) -> KaraokeUser:
-        return self.user_queue.popleft() if self.user_queue else None
+        return self.user_queue.pop(0) if self.user_queue else None
 
     def find_user(self, user_id: int) -> KaraokeUser:  # генератор возвращает первое совпадение по имени или None
         return next((user for user in self.user_queue if user.aiogram_user.id == user_id), None)
