@@ -56,16 +56,16 @@ class Karaoke:
 
     def get_next_round(self):
         while True:
-            round_queue = self.get_next_round_queue()
+            round_queue = self._get_next_round_queue()
 
             if not round_queue:  # либо конец очереди, либо треков вообще нет
                 # организовать удаление
                 self._yield_none_switcher(False)
-                round_queue = self.get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
+                round_queue = self._get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
                 self._yield_none_switcher(True)
             yield round_queue
 
-    def get_next_round_queue(self):
+    def _get_next_round_queue(self):
         round_queue = []
         for user in self.user_queue:
             track = next(user.next_track_waited)
@@ -88,10 +88,10 @@ class Karaoke:
     def find_user(self, user_id: int) -> KaraokeUser:  # генератор возвращает первое совпадение по имени или None
         return next((user for user in self.user_queue if user.aiogram_user.id == user_id), None)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Karaoke(name={self.name}, user_queue={list(self.user_queue)})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
 
