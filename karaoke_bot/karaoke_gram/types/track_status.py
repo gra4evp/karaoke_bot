@@ -1,6 +1,9 @@
-class TrackStatus:
+from abc import ABC
 
-    def __init__(self, status: str):
+
+class TrackStatus(ABC):
+
+    def __init__(self, status: str) -> None:
         self.status = status
 
 
