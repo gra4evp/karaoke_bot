@@ -1,10 +1,7 @@
-import subprocess
 import argparse
 from music2vec.extraction import Extractor
 from yt_dlp import YoutubeDL
 import os
-import ffmpeg
-import json
 
 
 def download_video_youtube(url: str):
