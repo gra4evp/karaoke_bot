@@ -21,9 +21,11 @@ counter_yes = 0
 
 user_ids = {}
 queue_ids = []
-admin_id = 1206756552  # владелец бара
+
+# admin_id = 1206756552  # владелец бара
 # admin_id = 345705084  # kuks_51
 # admin_id = 375571119  # gra4evp
+admin_id = 134566371  # gleb_kukuruz
 
 
 class FSMOrderTrack(StatesGroup):
@@ -110,9 +112,6 @@ async def add_link(message: types.Message, state: FSMContext):
 
 
 async def handle_link(callback: types.CallbackQuery):
-    global counter_yes
-    counter_yes += 1
-
     type_link = callback.data.replace('order_this_track ', '')
 
     user_id = callback.from_user.id
@@ -121,6 +120,10 @@ async def handle_link(callback: types.CallbackQuery):
     link = text[0]
     user_ids[user_id][0].append(link)
     time = callback.message.date
+
+    global counter_yes
+    counter_yes += 1
+
     print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}, type_link: {type_link}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
     await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
