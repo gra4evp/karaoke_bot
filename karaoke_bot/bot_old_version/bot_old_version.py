@@ -8,7 +8,7 @@ import random
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hlink
-from karaoke_bot.bot_old_version.random_recomendation import load_links_by_user_id, get_unique_links
+from karaoke_bot.bot_old_version.unique_links_parse import load_links_by_user_id, get_unique_links
 
 API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
 # API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
@@ -30,7 +30,7 @@ class FSMOrderTrack(StatesGroup):
     track_url = State()
 
 
-unique_links = get_unique_links('id_url_all.txt')
+unique_links = get_unique_links('id_url_all.csv')
 links_by_user_id = load_links_by_user_id('links_by_user_id.txt')
 
 
