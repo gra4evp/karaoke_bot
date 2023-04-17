@@ -3,8 +3,8 @@ import csv
 
 
 def load_links_by_user_id(file_name: str) -> dict:
-    with open(file_name, 'r') as f:
-        links_by_user_id = json.load(f)
+    with open(file_name, 'r') as file:
+        links_by_user_id = json.load(file)
     return links_by_user_id
 
 

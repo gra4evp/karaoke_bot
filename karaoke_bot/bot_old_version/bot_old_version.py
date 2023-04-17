@@ -33,7 +33,7 @@ class FSMOrderTrack(StatesGroup):
 
 
 unique_links = get_unique_links('id_url_all.csv')
-links_by_user_id = load_links_by_user_id('links_by_user_id.txt')
+links_by_user_id = load_links_by_user_id('links_by_user_id.json')
 
 
 async def start(message: types.Message):

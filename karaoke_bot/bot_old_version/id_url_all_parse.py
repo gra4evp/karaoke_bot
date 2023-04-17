@@ -20,8 +20,8 @@ def get_links_by_user_id(file_path):
 
 
 def save_links_by_user_id(links_by_user_id, output_file_name):
-    with open(output_file_name, 'w') as f:
-        json.dump(links_by_user_id, f, indent=2)
+    with open(output_file_name, 'w') as file:
+        json.dump(links_by_user_id, file, indent=2)
 
 
 def display_dict_as_json(dictionary):
@@ -46,4 +46,4 @@ if __name__ == '__main__':
                        writer.writerow(row)
 
     links_by_user_id = get_links_by_user_id(filename_output)
-    save_links_by_user_id(links_by_user_id, 'links_by_user_id.txt')
+    save_links_by_user_id(links_by_user_id, 'links_by_user_id.json')
