@@ -41,9 +41,9 @@ if __name__ == '__main__':
                 file_path = os.path.join(folder_path, filename)
 
                 with open(file_path, 'r', encoding='utf-8') as file_input:
-                   reader = csv.reader(file_input, delimiter=',')
-                   for row in reader:
-                       writer.writerow(row)
+                    reader = csv.reader(file_input, delimiter=',')
+                    for row in reader:
+                        writer.writerow(row)
 
     links_by_user_id = get_links_by_user_id(filename_output)
     save_links_by_user_id(links_by_user_id, 'links_by_user_id.json')
