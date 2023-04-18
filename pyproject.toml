@@ -2,22 +2,22 @@
 name = "karaoke-bot"
 version = "0.1.0"
 description = ""
-authors = ["petrg <p.grachev@ipavlov.ai>"]
+authors = ["gra4evp <petrgrachev1@gmail.com>"]
 readme = "README.md"
 packages = [{include = "karaoke_bot"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 aiogram = "^2.25.1"
 yt-dlp = "^2023.3.4"
-pytest-asyncio = "^0.21.0"
 
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.0.0"
+pytest = "^7.3.1"
 mypy = "^1.2.0"
-pytest = "^7.2.2"
 pylint = "^2.17.2"
+pytest-asyncio = "^0.21.0"
 
 [build-system]
 requires = ["poetry-core"]
