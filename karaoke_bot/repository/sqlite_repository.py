@@ -3,30 +3,25 @@ SQLite repository class module.
 """
 import sqlite3
 from inspect import get_annotations
-from typing import Generic, Type, Any
+from typing import Type, Any
+from karaoke_bot.repository.abstract_repository import AbstractRepository, T
 
-from karaoke_bot.repository.abstract_repository import T
 
-
-class SQLiteRepository(Generic[T]):
+class SQLiteRepository(AbstractRepository[T]):
     """
     Repository that works with an SQLite database.
     """
 
-    def __init__(self, db_name: str, entry_class: Type[T]) -> None:
-        self.db_name = db_name
-        self.entry_cls = entry_class
-        self.table_name = (
-            self.entry_cls.__name__.lower()
-        )  # but what if class name is "'; DROP TABLE" 👀
-        self.fields = get_annotations(self.entry_cls, eval_str=True)
+    def __init__(self, db_file: str, cls: Type) -> None:
+        self.db_file = db_file
+        self.table_name = cls.__name__.lower()
+        self.fields = get_annotations(cls, eval_str=True)
         self.fields.pop("pk")
-        self.fields_str = ", ".join(self.fields.keys())
-        self.fields_with_marks = ", ".join([f"{name}=?" for name in self.fields.keys()])
+
         self._create_table()
 
     def _create_table(self) -> None:
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             cur.execute(
                 f"""CREATE TABLE IF NOT EXISTS {self.table_name}(
@@ -44,7 +39,7 @@ class SQLiteRepository(Generic[T]):
             raise ValueError(f"trying to add object {obj} with filled 'pk' attribute")
         marks = ", ".join("?" * len(self.fields))
         values = [getattr(obj, f) for f in self.fields]
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             cur.execute("""PRAGMA foreign_keys = ON""")
             cur.execute(
@@ -69,7 +64,7 @@ class SQLiteRepository(Generic[T]):
         """
         Get and object with a fixed id.
         """
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             row = cur.execute(
                 f"""SELECT * FROM {self.table_name} WHERE id=={pk}"""
@@ -79,13 +74,13 @@ class SQLiteRepository(Generic[T]):
             return None
         return self._covert_row(row)
 
-    def get_all_where(self, where: dict[str, Any] | None = None) -> list[T] | None:
+    def get_all(self, where: dict[str, Any] | None = None) -> list[T] | None:
         """
         Get all entries that satisfy all "where" conditions, return all
         entries if where is None.
         where is a dictionary {"entry_field": value}
         """
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             query = f"""SELECT * FROM {self.table_name}"""
             mark_replacements = []
@@ -107,7 +102,7 @@ class SQLiteRepository(Generic[T]):
         if obj.pk == 0:
             raise ValueError("trying to update an object with no primary key")
         new_values = [getattr(obj, x) for x in self.fields]
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             cur.execute(
                 f"""UPDATE {self.table_name} SET {self.fields_with_marks}
@@ -125,7 +120,7 @@ class SQLiteRepository(Generic[T]):
         """
         Remove an entry.
         """
-        with sqlite3.connect(self.db_name) as con:
+        with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
             cur.execute(f"""DELETE FROM {self.table_name} WHERE id=={pk}""")
         con.close()
