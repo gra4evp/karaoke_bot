@@ -18,18 +18,9 @@ class SQLiteRepository(AbstractRepository[T]):
         self.fields = get_annotations(cls, eval_str=True)
         self.fields.pop("pk")
 
-        self._create_table()
-
-    def _create_table(self) -> None:
-        with sqlite3.connect(self.db_file) as con:
-            cur = con.cursor()
-            cur.execute(
-                f"""CREATE TABLE IF NOT EXISTS {self.table_name}(
-                'id' INTEGER UNIQUE, {self.fields_str},
-                PRIMARY KEY("id" AUTOINCREMENT)
-            );"""
-            )
-        con.commit()
+        # Аттрибуты для составления запроса метода add
+        self._names = ', '.join(self.fields.keys())
+        self._marks = ', '.join("?" * len(self.fields))
 
     def add(self, obj: T) -> int:
         """
@@ -37,39 +28,28 @@ class SQLiteRepository(AbstractRepository[T]):
         """
         if getattr(obj, "pk", None) != 0:
             raise ValueError(f"trying to add object {obj} with filled 'pk' attribute")
-        marks = ", ".join("?" * len(self.fields))
-        values = [getattr(obj, f) for f in self.fields]
-        with sqlite3.connect(self.db_file) as con:
-            cur = con.cursor()
-            cur.execute("""PRAGMA foreign_keys = ON""")
-            cur.execute(
-                f"""INSERT INTO {self.table_name}({self.fields_str}) VALUES ({marks})""",
-                values,
-            )
-            pk = cur.lastrowid
-            assert (
-                pk is not None
-            )  # something must go terribly wrong for this not to be the case
-            obj.pk = pk
-        con.close()
-        return obj.pk
 
-    def _covert_row(self, row_: list[str]) -> T:
-        fields = dict(zip(self.fields, row_[1:]))
-        fields["pk"] = row_[0]
-        res_obj = self.entry_cls(**fields)
-        return res_obj
+        values = [getattr(obj, field) for field in self.fields]
+
+        with sqlite3.connect(self.db_file) as connection:
+            cur = connection.cursor()
+            cur.execute("""PRAGMA foreign_keys = ON""")
+            cur.execute(f"""INSERT INTO {self.table_name+'s'} ({self._names}) VALUES ({self._marks})""", values)
+            pk = cur.lastrowid
+            obj.pk = pk
+        connection.close()
+        return obj.pk
 
     def get(self, pk: int) -> T | None:
         """
         Get and object with a fixed id.
         """
-        with sqlite3.connect(self.db_file) as con:
-            cur = con.cursor()
+        with sqlite3.connect(self.db_file) as connection:
+            cur = connection.cursor()
             row = cur.execute(
                 f"""SELECT * FROM {self.table_name} WHERE id=={pk}"""
             ).fetchone()
-        con.close()
+        connection.close()
         if not row:
             return None
         return self._covert_row(row)
@@ -80,8 +60,8 @@ class SQLiteRepository(AbstractRepository[T]):
         entries if where is None.
         where is a dictionary {"entry_field": value}
         """
-        with sqlite3.connect(self.db_file) as con:
-            cur = con.cursor()
+        with sqlite3.connect(self.db_file) as connection:
+            cur = connection.cursor()
             query = f"""SELECT * FROM {self.table_name}"""
             mark_replacements = []
             if where:
@@ -89,7 +69,7 @@ class SQLiteRepository(AbstractRepository[T]):
                 query += f" WHERE {fields}"
                 mark_replacements = list(map(str, where.values()))
             rows = cur.execute(query, mark_replacements).fetchall()
-        con.close()
+        connection.close()
         if rows:
             res = [self._covert_row(row) for row in rows]
             return res
@@ -101,6 +81,7 @@ class SQLiteRepository(AbstractRepository[T]):
         """
         if obj.pk == 0:
             raise ValueError("trying to update an object with no primary key")
+
         new_values = [getattr(obj, x) for x in self.fields]
         with sqlite3.connect(self.db_file) as con:
             cur = con.cursor()
