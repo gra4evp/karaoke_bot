@@ -11,6 +11,7 @@ python = "^3.10"
 aiogram = "^2.25.1"
 yt-dlp = "^2023.3.4"
 pymysql = "^1.0.3"
+sqlalchemy = "^2.0.10"
 
 
 [tool.poetry.group.dev.dependencies]
