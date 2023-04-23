@@ -57,8 +57,8 @@ class Administrator:
 @dataclass
 class VisitorPerformance:
     id: int
-    visitor_id: datetime
-    track_version_id: datetime
+    visitor_id: int
+    track_version_id: int
     session_id: int
 
 
