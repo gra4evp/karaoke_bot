@@ -17,8 +17,6 @@ bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dispatcher = Dispatcher(bot, storage=storage)
 
-counter_yes = 0
-
 user_ids = {}
 queue_ids = []
 
@@ -89,9 +87,10 @@ async def add_link(message: types.Message, state: FSMContext):
         user_ids[user_id] = ([], message.from_user.username)
 
     text = message.text
+    time = message.date
     if 'https' in text:
         user_ids[user_id][0].append(text)
-        print(f'{user_id}, {text}, {message.date}')
+        print(f'{user_id}, {text}, {time}')
         await message.answer('Success! Sing better than the original, I believe in you 😇')
     else:
         await message.answer('You added the link incorrectly, please try again 😉')
@@ -104,6 +103,9 @@ async def add_link(message: types.Message, state: FSMContext):
     else:
         link = random.choice(list(unique_links))
         callback_data = 'order_this_track random_link'
+
+    type_link = callback_data.replace('order_this_track ', '')
+    print(f'rec: {user_id}, {link}, {time}, type_link: {type_link}')
 
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Order this track", callback_data=callback_data))
@@ -121,10 +123,7 @@ async def handle_link(callback: types.CallbackQuery):
     user_ids[user_id][0].append(link)
     time = callback.message.date
 
-    global counter_yes
-    counter_yes += 1
-
-    print(f'{user_id}, {link}, {time}, counter_yes: {counter_yes}, type_link: {type_link}')
+    print(f'rec: {user_id}, {link}, {time}, accepted, type_link: {type_link}')
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
     await callback.message.edit_text(f"✅ {hlink('Track', link)} is ordered", parse_mode='HTML')
 
