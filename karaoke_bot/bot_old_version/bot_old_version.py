@@ -78,14 +78,15 @@ async def add_link(message: types.Message, state: FSMContext):
     if user_id not in user_ids:
         user_ids[user_id] = ([], message.from_user.username)
 
-    text = message.text
-    time = message.date
-
-    user_ids[user_id][0].append(text)
-    print(f'{user_id}, {text}, {time}')
+    user_ids[user_id][0].append(message.text)
+    print(f'{user_id}, {message.text}, {message.date}')
     await message.answer('Success! Sing better than the original, I believe in you 😇')
+    await get_recommendation(message)
 
-    # ---------------------------------------------------------------------------------------------------------
+
+async def get_recommendation(message: types.Message):
+    user_id = message.from_user.id
+
     links = links_by_user_id.get(str(user_id))
     if links:
         link = links.pop(random.randint(0, len(links) - 1))
@@ -95,13 +96,13 @@ async def add_link(message: types.Message, state: FSMContext):
         callback_data = 'order_this_track random_link'
 
     type_link = callback_data.replace('order_this_track ', '')
-    print(f'rec: {user_id}, {link}, {time}, type_link: {type_link}')
+    print(f'rec: {user_id}, {link}, {message.date}, type_link: {type_link}')
+
+    rec_message = await message.answer(f"{link}\n\nTest recommendation", parse_mode='HTML')
 
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Order this track", callback_data=callback_data))
-
-    # TODO попробовать сохранять объект message и использовать его
-    await message.answer(f"{link}\n\nTest recomendation", reply_markup=keyboard, parse_mode='HTML')
+    await rec_message.edit_reply_markup(keyboard)
 
 
 async def state_order_track_is_invalid(message: types.Message):
