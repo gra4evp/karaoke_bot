@@ -6,27 +6,27 @@ unique_links = get_unique_links('id_url_all.csv')
 links_by_user_id = load_links_by_user_id('links_by_user_id.json')
 
 
-class Recommendation:
+class RandomRecommendation:
 
     def __init__(self,
+                 url: str,
                  message_id: int,
                  user_id: int,
                  dt: datetime,
                  rec_type: str | None = None,
                  is_accepted: bool = False):
+        self.url = url
         self.message_id = message_id
         self.user_id = user_id
         self.dt = dt
         self.rec_type = rec_type
         self.is_accepted = is_accepted
 
-    def get_recommendation(self) -> str:
-        links = links_by_user_id.get(str(self.user_id))
-        if links:
-            link = links.pop(random.randint(0, len(links) - 1))
-        else:
-            link = random.choice(list(unique_links))
-        return link
+
+def get_recommendation_by_message_id(message_id: int) -> RandomRecommendation:
+    for recommendation in recommendations:
+        if recommendation.message_id == message_id:
+            return recommendation
 
 
-recommendations: list[Recommendation] = []
+recommendations: list[RandomRecommendation] = []
