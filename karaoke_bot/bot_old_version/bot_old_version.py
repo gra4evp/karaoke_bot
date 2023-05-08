@@ -9,6 +9,12 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hlink
 from karaoke_bot.bot_old_version.unique_links_parse import load_links_by_user_id, get_unique_links
+from sqlalchemy_orm import VisitorPerformance, Recommendations, engine
+from sqlalchemy.orm import sessionmaker
+
+# подключение к бд
+Session = sessionmaker(bind=engine)
+session = Session()
 
 API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
 # API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
@@ -80,6 +86,11 @@ async def add_link(message: types.Message, state: FSMContext):
 
     user_ids[user_id][0].append(message.text)
     print(f'{user_id}, {message.text}, {message.date}')
+
+    performance = VisitorPerformance(user_id=user_id, url=message.text, created_at=message.date)
+    session.add(performance)
+    session.commit()
+
     await message.answer('Success! Sing better than the original, I believe in you 😇')
     await get_recommendation(message)
 

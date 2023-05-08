@@ -1,0 +1,34 @@
+from sqlalchemy import Integer, String, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.ext.declarative import declarative_base
+from datetime import datetime
+from sqlalchemy import create_engine
+
+
+Base = declarative_base()
+engine = create_engine('sqlite:///karaoke_old_version.db', echo=True)
+
+
+class VisitorPerformance(Base):
+    __tablename__ = 'visitor_performance'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer)
+    url: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+
+class Recommendations(Base):
+    __tablename__ = 'recommendations'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer)
+    message_id: Mapped[int] = mapped_column(Integer)
+    url: Mapped[str] = mapped_column(String(100))
+    rec_type: Mapped[str] = mapped_column(String(15))
+    is_accepted: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+
+
+Base.metadata.create_all(engine)
