@@ -138,7 +138,6 @@ async def callback_order_this_track(callback: types.CallbackQuery):
     user_ids[callback.from_user.id][0].append(recommendation.url)
 
     await callback.answer('Success! Sing better than the original, I believe in you 😇')
-    print(recommendation.url)
     await callback.message.edit_text(f"✅ {hlink('Track', recommendation.url)} is ordered", parse_mode='HTML')
     session.commit()
 
