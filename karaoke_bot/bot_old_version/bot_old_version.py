@@ -26,10 +26,10 @@ dispatcher = Dispatcher(bot, storage=storage)
 user_ids = {}
 queue_ids = []
 
-# admin_id = 1206756552  # владелец бара
+admin_id = 1206756552  # владелец бара
 # admin_id = 345705084  # kuks_51
 # admin_id = 375571119  # gra4evp
-admin_id = 134566371  # gleb_kukuruz
+# admin_id = 134566371  # gleb_kukuruz
 
 
 class FSMOrderTrack(StatesGroup):
@@ -146,6 +146,17 @@ async def join_a_group(message: types.Message):
     await message.answer('https://t.me/+JPb01AZkQgxkOGMy')
 
 
+async def send_hello_text(message: types.Message):
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+
+    if message.from_user.id != admin_id:
+        keyboard.add(KeyboardButton("Order a track"))
+        keyboard.add(KeyboardButton("Join a group of karaoke lovers"))
+    else:
+        keyboard.add(KeyboardButton("Get next link round"))
+    await message.answer('Hello', reply_markup=keyboard)
+
+
 def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(start, commands=['start'], state='*')
     dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
@@ -167,6 +178,8 @@ def register_handlers(dispatcher: Dispatcher):
                                         state=FSMOrderTrack.track_url)
 
     dispatcher.register_callback_query_handler(callback_order_this_track, Text(startswith='order_this_track'))
+
+    dispatcher.register_message_handler(send_hello_text, content_types='any')
 
 
 if __name__ == "__main__":
