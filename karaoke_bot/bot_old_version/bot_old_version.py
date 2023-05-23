@@ -8,7 +8,8 @@ import random
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hlink
-from karaoke_bot.bot_old_version.unique_links_parse import load_links_by_user_id, get_unique_links
+import karaoke_bot.bot_old_version.unique_links_parse as ulp
+# from karaoke_bot.bot_old_version.unique_links_parse import load_links_by_user_id, get_unique_links
 from sqlalchemy_orm import VisitorPerformance, Recommendations, engine
 from sqlalchemy.orm import sessionmaker
 
@@ -36,8 +37,8 @@ class FSMOrderTrack(StatesGroup):
     track_url = State()
 
 
-unique_links = get_unique_links('id_url_all.csv')
-links_by_user_id = load_links_by_user_id('links_by_user_id.json')
+unique_links = ulp.get_unique_links('id_url_all.csv')
+links_by_user_id = ulp.load_links_by_user_id('links_by_user_id.json')
 
 
 async def start(message: types.Message, state: FSMContext):
