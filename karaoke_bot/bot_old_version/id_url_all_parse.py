@@ -34,16 +34,15 @@ if __name__ == '__main__':
     folder_path = 'id_url_files'
     filename_output = 'id_url_all.csv'
     with open(filename_output, 'w', encoding='utf-8', newline='') as file_output:
-        writer = csv.writer(file_output, delimiter=',')
+        writer = csv.DictWriter(file_output, fieldnames=['user_id', 'url'], delimiter=',')
 
         for filename in os.listdir(folder_path):
             if filename.endswith('.csv'):
                 file_path = os.path.join(folder_path, filename)
 
                 with open(file_path, 'r', encoding='utf-8') as file_input:
-                    reader = csv.reader(file_input, delimiter=',')
-                    for row in reader:
-                        writer.writerow(row)
+                    for row in csv.DictReader(file_input, delimiter=','):
+                        writer.writerow({'user_id': row['user_id'], 'url': row['url']})
 
     links_by_user_id = get_links_by_user_id(filename_output)
     save_links_by_user_id(links_by_user_id, 'links_by_user_id.json')
