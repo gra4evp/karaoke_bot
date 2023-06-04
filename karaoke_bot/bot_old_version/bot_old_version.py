@@ -40,7 +40,7 @@ unique_links = get_unique_links('id_url_all.csv')
 links_by_user_id = load_links_by_user_id('links_by_user_id.json')
 
 
-async def start(message: types.Message, state: FSMContext):
+async def start(message: types.Message):
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
     if message.from_user.id != admin_id:
