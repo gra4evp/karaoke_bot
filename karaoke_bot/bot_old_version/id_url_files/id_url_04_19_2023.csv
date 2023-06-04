@@ -1,33 +1,34 @@
-134566371, https://youtu.be/rtKLTEyyCts, 2023-04-19 22:23:35, counter_yes: 1, type_link: user_link
-134566371, https://www.youtube.com/watch?v=NvgR7xpJWd4, 2023-04-19 22:24:43
-208361769, https://youtu.be/RZ_PMPMNQJE, 2023-04-19 22:24:43
-134566371, https://youtu.be/Yfzrig2TpbY, 2023-04-19 22:24:43, counter_yes: 2, type_link: user_link
-625885058, https://youtu.be/FrjB-fRC-dQ, 2023-04-19 22:29:02
-1111877819, https://xm-russia.org/track/15876/%D0%BD%D0%BE%D0%B2%D1%8B%D0%B5-%D0%BB%D1%8E%D0%B4%D0%B8, 2023-04-19 22:29:08
-1111877819, https://youtu.be/WbV55_yg7e0, 2023-04-19 22:29:08, counter_yes: 3, type_link: user_link
-625885058, https://youtu.be/1aFtLFzKb14, 2023-04-19 22:30:49
-817385950, https://youtu.be/HyTmNZjSI4I, 2023-04-19 22:31:22
-394215470, https://youtu.be/heIBoulYPO8, 2023-04-19 22:35:00
-394215470, https://x-minus.pro/track/580324/fejverk, 2023-04-19 22:36:54
-208361769, https://youtu.be/RDVjxwsbFUQ, 2023-04-19 22:49:15
-269289484, https://youtu.be/N9xMfDC3J4I, 2023-04-19 22:51:32
-269289484, https://youtu.be/BqZAntfp4B4, 2023-04-19 22:57:49
-6025193051, https://m.youtube.com/watch?v=7aIreXQywmw&pp=ygUXU2lhIHVuc3RvcHBhYmxlIGthcmFva2U%3D, 2023-04-19 23:00:31
-48856678, https://youtu.be/Lwx8xc7Ejz4, 2023-04-19 23:01:08
-817385950, https://youtu.be/AAPRtwEp82c, 2023-04-19 23:01:19
-208361769, https://youtu.be/19Kju46x324, 2023-04-19 23:03:19
-269289484, https://youtu.be/l5shwZTwHec, 2023-04-19 23:07:39
-269289484, https://youtu.be/l5shwZTwHec, 2023-04-19 23:09:54
-269289484, https://youtu.be/3tzGLb8Z9uc, 2023-04-19 23:19:12
-353604680, https://youtu.be/Plq5IiR5wIY, 2023-04-19 23:22:54
-90373963, https://youtu.be/Re5i-mTkhJc, 2023-04-19 23:23:21
-269289484, https://youtu.be/4Jfy1ulVgvc, 2023-04-19 23:26:26
-269289484, https://youtu.be/Uob4CFR_svA, 2023-04-19 23:31:12
-1732255675, https://youtu.be/TZkTQyUysCk, 2023-04-19 23:32:04
-6025193051, https://m.youtube.com/watch?v=J-ZePwXe14A&pp=ygUXV2hlbiB5b3VyZSBnb25lIGthcmFva2U%3D, 2023-04-19 23:33:13
-269289484, https://youtu.be/pdheWX4oO1A, 2023-04-19 23:35:42
-269289484, https://youtu.be/Z7VYEhapHgw, 2023-04-19 23:36:57
-394215470, https://youtu.be/5wUk9TGAKAs, 2023-04-19 23:37:26
-6025193051, https://m.youtube.com/watch?v=UTlBtVWPg28&pp=ygUYQWRlbGUgZWFzeSBvbiBtZSBrYXJhb2tl, 2023-04-19 23:39:10
-269289484, https://youtu.be/Ziqx6hDwN1A, 2023-04-19 23:46:29
-269289484, https://youtu.be/9Lxm0iSnKNc, 2023-04-19 23:46:53
+user_id,url,datetime
+134566371,https://youtu.be/rtKLTEyyCts,2023-04-1922:23:35
+134566371,https://www.youtube.com/watch?v=NvgR7xpJWd4,2023-04-1922:24:43
+208361769,https://youtu.be/RZ_PMPMNQJE,2023-04-1922:24:43
+134566371,https://youtu.be/Yfzrig2TpbY,2023-04-1922:24:43
+625885058,https://youtu.be/FrjB-fRC-dQ,2023-04-1922:29:02
+1111877819,https://xm-russia.org/track/15876/%D0%BD%D0%BE%D0%B2%D1%8B%D0%B5-%D0%BB%D1%8E%D0%B4%D0%B8,2023-04-1922:29:08
+1111877819,https://youtu.be/WbV55_yg7e0,2023-04-1922:29:08
+625885058,https://youtu.be/1aFtLFzKb14,2023-04-1922:30:49
+817385950,https://youtu.be/HyTmNZjSI4I,2023-04-1922:31:22
+394215470,https://youtu.be/heIBoulYPO8,2023-04-1922:35:00
+394215470,https://x-minus.pro/track/580324/fejverk,2023-04-1922:36:54
+208361769,https://youtu.be/RDVjxwsbFUQ,2023-04-1922:49:15
+269289484,https://youtu.be/N9xMfDC3J4I,2023-04-1922:51:32
+269289484,https://youtu.be/BqZAntfp4B4,2023-04-1922:57:49
+6025193051,https://m.youtube.com/watch?v=7aIreXQywmw&pp=ygUXU2lhIHVuc3RvcHBhYmxlIGthcmFva2U%3D,2023-04-1923:00:31
+48856678,https://youtu.be/Lwx8xc7Ejz4,2023-04-1923:01:08
+817385950,https://youtu.be/AAPRtwEp82c,2023-04-1923:01:19
+208361769,https://youtu.be/19Kju46x324,2023-04-1923:03:19
+269289484,https://youtu.be/l5shwZTwHec,2023-04-1923:07:39
+269289484,https://youtu.be/l5shwZTwHec,2023-04-1923:09:54
+269289484,https://youtu.be/3tzGLb8Z9uc,2023-04-1923:19:12
+353604680,https://youtu.be/Plq5IiR5wIY,2023-04-1923:22:54
+90373963,https://youtu.be/Re5i-mTkhJc,2023-04-1923:23:21
+269289484,https://youtu.be/4Jfy1ulVgvc,2023-04-1923:26:26
+269289484,https://youtu.be/Uob4CFR_svA,2023-04-1923:31:12
+1732255675,https://youtu.be/TZkTQyUysCk,2023-04-1923:32:04
+6025193051,https://m.youtube.com/watch?v=J-ZePwXe14A&pp=ygUXV2hlbiB5b3VyZSBnb25lIGthcmFva2U%3D,2023-04-1923:33:13
+269289484,https://youtu.be/pdheWX4oO1A,2023-04-1923:35:42
+269289484,https://youtu.be/Z7VYEhapHgw,2023-04-1923:36:57
+394215470,https://youtu.be/5wUk9TGAKAs,2023-04-1923:37:26
+6025193051,https://m.youtube.com/watch?v=UTlBtVWPg28&pp=ygUYQWRlbGUgZWFzeSBvbiBtZSBrYXJhb2tl,2023-04-1923:39:10
+269289484,https://youtu.be/Ziqx6hDwN1A,2023-04-1923:46:29
+269289484,https://youtu.be/9Lxm0iSnKNc,2023-04-1923:46:53
