@@ -24,7 +24,6 @@ storage = MemoryStorage()
 dispatcher = Dispatcher(bot, storage=storage)
 
 user_ids = {}
-queue_ids = []
 
 admin_id = 1206756552  # владелец бара
 # admin_id = 345705084  # kuks_51
