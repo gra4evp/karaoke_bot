@@ -109,7 +109,7 @@ async def get_recommendation(message: types.Message):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Order this track", callback_data=f'order_this_track'))
     await rec_message.edit_reply_markup(keyboard)
-
+    print(link)
     recommendation = Recommendations(user_id=user_id, message_id=rec_message.message_id, url=link, rec_type=type_link,
                                      is_accepted=False, created_at=message.date, updated_at=message.date)
     session.add(recommendation)
@@ -126,8 +126,9 @@ async def callback_order_this_track(callback: types.CallbackQuery):
     recommendation.is_accepted = True
     recommendation.updated_at = callback.message.date
 
+    text = callback.message.text.replace('\n\nTest recommendation', '')
     performance = VisitorPerformance(user_id=callback.from_user.id,
-                                     url=callback.message.text,
+                                     url=text,
                                      created_at=callback.message.date)
     session.add(performance)
 
