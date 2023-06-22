@@ -122,7 +122,7 @@ async def state_order_track_is_invalid(message: types.Message):
 
 async def callback_order_this_track(callback: types.CallbackQuery):
     recommendation = session.query(Recommendations).filter(Recommendations.message_id == callback.message.message_id).first()
-
+    # Проверить когда может придти None?
     recommendation.is_accepted = True
     recommendation.updated_at = callback.message.date
 
