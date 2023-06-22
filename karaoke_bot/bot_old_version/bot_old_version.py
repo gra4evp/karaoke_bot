@@ -35,6 +35,12 @@ class FSMOrderTrack(StatesGroup):
     track_url = State()
 
 
+class FSMMassMessage(StatesGroup):
+    text = State()
+    image = State()
+    confirm = State()
+
+
 unique_links = get_unique_links('id_url_all.csv')
 links_by_user_id = load_links_by_user_id('links_by_user_id.json')
 
@@ -157,7 +163,135 @@ async def send_hello_text(message: types.Message):
     await message.answer('Hello', reply_markup=keyboard)
 
 
+async def mass_message(message: types.Message):
+    await message.answer("<b>Mass Message Constructor</b>", parse_mode='HTML')
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text='Skip', callback_data='mass_message_skip text'))
+    await message.answer("Please enter the text (if any) for the message.", parse_mode='HTML', reply_markup=keyboard)
+    await FSMMassMessage.text.set()
+
+
+async def mass_message_text_registration(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['mass_message_text'] = message.text
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text='Skip', callback_data='mass_message_skip image'))
+    await message.answer("Great! Now please upload the image (if any) for the message.", reply_markup=keyboard)
+    await FSMMassMessage.image.set()
+
+
+async def mass_message_image_registration(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['mass_message_image_id'] = message.photo[0].file_id
+    await mass_message_confirm(message.from_user.id, state)
+
+
+async def state_mass_message_image_is_invalid(message: types.Message):
+    await message.reply("It seems you sent something wrong. Please send a <b>image</b> to the mass message.\n\n",
+                        parse_mode='HTML')
+
+
+async def mass_message_confirm(user_id, state: FSMContext):
+
+    confirm_text = "Confirm sending"
+    async with state.proxy() as data:
+        text = data.get('mass_message_text')
+        text = confirm_text if text is None else f'{confirm_text}\n\nText: {text}'
+        image_id = data.get('mass_message_image_id')
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton('✅ Send', callback_data='mass_message send'))
+    keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='mass_message edit'))
+    keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='mass_message delete'))
+
+    if image_id is not None:
+        await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, reply_markup=keyboard)
+    else:
+        await bot.send_message(chat_id=user_id, text=text, reply_markup=keyboard)
+
+    await FSMMassMessage.confirm.set()
+
+
+async def callback_mass_message_confirm(callback: types.CallbackQuery, state: FSMContext):
+    action = callback.data.split(' ')[-1]
+    print(f'action - {action}')
+    await callback.answer()
+
+    if action == 'send':
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton('✅ Send', callback_data='mass_message force_send'),
+                     InlineKeyboardButton('<< Back', callback_data='mass_message back'))
+        await callback.message.edit_reply_markup(keyboard)
+
+    if action == 'edit':
+        pass
+
+    if action == 'back':
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton('✅ Send', callback_data='mass_message send'))
+        keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='mass_message edit'))
+        keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='mass_message delete'))
+        await callback.message.edit_reply_markup(keyboard)
+
+    if action == 'delete':
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='mass_message force_delete'),
+                     InlineKeyboardButton('<< Back', callback_data='mass_message back'))
+        await callback.message.edit_reply_markup(keyboard)
+
+    if action == 'force_send':
+        await callback.answer('✅ Mass message sent successfully!', show_alert=True)
+        await callback.message.delete()
+        async with state.proxy() as data:
+            text = data.get('mass_message_text')
+            image_id = data.get('mass_message_image_id')
+        await state.finish()
+        await send_mass_message(text, image_id)
+
+    if action == 'force_delete':
+        await callback.message.delete()
+        await callback.answer('Mass message deleted')
+        await state.finish()
+
+async def callback_mass_message_skip(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+
+    skiptype = callback.data.split(' ')[-1]
+    if skiptype == 'text':
+        await callback.message.answer("Ok! Please upload the image for the message.")
+        await FSMMassMessage.image.set()
+    if skiptype == 'image':
+        await FSMMassMessage.confirm.set()
+        await mass_message_confirm(callback.from_user.id, state)
+
+
+async def send_mass_message(text, image_id):
+    for user_id in [345705084, 375571119, 134566371]:
+        if text is not None:
+            if image_id is not None:
+                await bot.send_photo(chat_id=user_id, photo=image_id, caption=text)
+            else:
+                await bot.send_message(chat_id=user_id, text=text)
+        else:
+            await bot.send_photo(chat_id=user_id, photo=image_id)
+
+
+async def cancel_command(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.answer("Ok")
+        return None
+    await state.finish()
+    await message.reply("Ok")
+
+
 def register_handlers(dispatcher: Dispatcher):
+
+    dispatcher.register_message_handler(cancel_command, Text(equals='cancel', ignore_case=True), state='*')
+    dispatcher.register_message_handler(cancel_command, commands=['cancel'], state='*')
+
     dispatcher.register_message_handler(start, commands=['start'], state='*')
     dispatcher.register_message_handler(join_a_group, Text(equals='Join a group of karaoke lovers', ignore_case=True))
 
@@ -178,6 +312,32 @@ def register_handlers(dispatcher: Dispatcher):
                                         state=FSMOrderTrack.track_url)
 
     dispatcher.register_callback_query_handler(callback_order_this_track, Text(startswith='order_this_track'))
+
+    dispatcher.register_message_handler(mass_message,
+                                        lambda message: message.from_user.id in [345705084, 375571119, 134566371],
+                                        commands=['mass_message'])
+
+    dispatcher.register_message_handler(mass_message_text_registration, state=FSMMassMessage.text)
+
+    dispatcher.register_message_handler(mass_message_image_registration,
+                                        content_types=['photo'],
+                                        state=FSMMassMessage.image)
+    dispatcher.register_message_handler(state_mass_message_image_is_invalid,
+                                        content_types='any',
+                                        state=FSMMassMessage.image)
+
+    dispatcher.register_callback_query_handler(callback_mass_message_confirm,
+                                               Text(equals=['mass_message send',
+                                                            'mass_message force_send',
+                                                            'mass_message edit',
+                                                            'mass_message delete',
+                                                            'mass_message force_delete',
+                                                            'mass_message back']),
+                                               state=FSMMassMessage.confirm)
+
+    dispatcher.register_callback_query_handler(callback_mass_message_skip,
+                                               Text(equals=['mass_message_skip text', 'mass_message_skip image']),
+                                               state=[FSMMassMessage.text, FSMMassMessage.image])
 
     dispatcher.register_message_handler(send_hello_text, content_types='any')
 

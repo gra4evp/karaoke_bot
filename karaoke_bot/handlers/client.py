@@ -148,7 +148,7 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
 
 
 async def order_track_command(message: types.Message, state: FSMContext):
-    # Если нет записи о пользователе, то перехходим в хендлер_callback для команды /search_karaoke или /cancel
+    # Если нет записи о пользователе, то переходим в хендлер_callback для команды /search_karaoke или /cancel
     query = sqlite_db.sql_find_user_record(message.from_user.id)
     if query is not None:
 
