@@ -11,7 +11,8 @@ from aiogram.utils.markdown import hlink
 from unique_links_parse import get_unique_links, load_links_by_user_id
 from sqlalchemy_orm import VisitorPerformance, Recommendations, engine
 from sqlalchemy.orm import sessionmaker
-
+import time
+import csv
 # подключение к бд
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -238,7 +239,7 @@ async def callback_mass_message_confirm(callback: types.CallbackQuery, state: FS
             image_id = data.get('mass_message_image_id')
 
         await state.finish()
-        await send_mass_message(text, image_id)
+        await send_mass_message(sender_id=callback.from_user.id, text=text, image_id=image_id)
 
     elif action == 'edit':
         keyboard.add(InlineKeyboardButton('💬 Edit text', callback_data='mass_message edit_text'))
@@ -275,15 +276,35 @@ async def callback_mass_message_skip(callback: types.CallbackQuery, state: FSMCo
         await mass_message_confirm(callback.from_user.id, state)
 
 
-async def send_mass_message(text, image_id):
-    for user_id in [345705084, 375571119, 134566371]:
-        if text is not None:
-            if image_id is not None:
-                await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
+async def send_mass_message(sender_id: int, text: str, image_id: str):
+
+    with open('id_url_all.csv', encoding='u8') as fi:
+        rows = csv.reader(fi)
+        unic_user_ids = set(row[0] for row in rows)
+
+    user_ids = session.query(VisitorPerformance.user_id.distinct()).all()
+
+    for user_id, in user_ids:
+        unic_user_ids.add(user_id)
+
+    count_sended = 0
+
+    try:
+        for user_id in unic_user_ids:
+            if text is not None:
+                if image_id is not None:
+                    await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
+                else:
+                    await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
             else:
-                await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
-        else:
-            await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
+                await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
+            count_sended += 1
+            time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
+    except:
+        print(f'Возникла ошибка при отправлении - {user_id}')
+
+    await bot.send_message(chat_id=sender_id,
+                           text=f'The message was sent to {count_sended}/{len(unic_user_ids)} users')
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
