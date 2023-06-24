@@ -287,21 +287,21 @@ async def send_mass_message(sender_id: int, text: str, image_id: str):
         unique_user_ids.add(user_id)
 
     count_sended = 0
-    # for user_id in unique_user_ids:
-    #     try:
-    #         if text is not None:
-    #             if image_id is not None:
-    #                 await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
-    #             else:
-    #                 await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
-    #         else:
-    #             await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
-    #         print(f'Сообщение доставлено {user_id}')
-    #         count_sended += 1
-    #         time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
-    #
-    #     except Exception as e:
-    #         print(f'Возникла ошибка при отправлении - {user_id}: {str(e)}')
+    for user_id in unique_user_ids:
+        try:
+            if text is not None:
+                if image_id is not None:
+                    await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
+                else:
+                    await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
+            else:
+                await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
+            print(f'Сообщение доставлено {user_id}')
+            count_sended += 1
+            time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
+
+        except Exception as e:
+            print(f'Возникла ошибка при отправлении - {user_id}: {str(e)}')
 
     await bot.send_message(chat_id=sender_id,
                            text=f'The message was sent to {count_sended}/{len(unique_user_ids)} users')
