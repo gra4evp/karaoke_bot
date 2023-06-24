@@ -26,9 +26,9 @@ dispatcher = Dispatcher(bot, storage=storage)
 
 user_ids = {}
 
-admin_id = 1206756552  # владелец бара
+# admin_id = 1206756552  # владелец бара
 # admin_id = 345705084  # kuks_51
-# admin_id = 375571119  # gra4evp
+admin_id = 375571119  # gra4evp
 # admin_id = 134566371  # gleb_kukuruz
 
 
@@ -91,7 +91,7 @@ async def add_link(message: types.Message, state: FSMContext):
         user_ids[user_id] = ([], message.from_user.username)
 
     user_ids[user_id][0].append(message.text)
-
+    print(message.text)
     performance = VisitorPerformance(user_id=user_id, url=message.text, created_at=message.date)
     session.add(performance)
     session.commit()
@@ -108,7 +108,7 @@ async def get_recommendation(message: types.Message):
         link = links.pop(random.randint(0, len(links) - 1))
         type_link = 'user_link'
     else:
-        link = random.choice(list(unique_links))
+        link = random.choice(unique_links)
         type_link = 'random_link'
 
     rec_message = await message.answer(f"{link}\n\nTest recommendation", parse_mode='HTML')
@@ -116,7 +116,7 @@ async def get_recommendation(message: types.Message):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(InlineKeyboardButton(text="Order this track", callback_data=f'order_this_track'))
     await rec_message.edit_reply_markup(keyboard)
-    print(link)
+
     recommendation = Recommendations(user_id=user_id, message_id=rec_message.message_id, url=link, rec_type=type_link,
                                      is_accepted=False, created_at=message.date, updated_at=message.date)
     session.add(recommendation)
@@ -279,32 +279,32 @@ async def callback_mass_message_skip(callback: types.CallbackQuery, state: FSMCo
 async def send_mass_message(sender_id: int, text: str, image_id: str):
 
     with open('id_url_all.csv', encoding='u8') as fi:
-        unic_user_ids = set(int(row[0]) for row in csv.reader(fi))
+        unique_user_ids = set(int(row['user_id']) for row in csv.DictReader(fi))
 
     user_ids = session.query(VisitorPerformance.user_id.distinct()).all()
 
     for user_id, in user_ids:  # type(user_id) - <tuple[int]>
-        unic_user_ids.add(user_id)
+        unique_user_ids.add(user_id)
 
     count_sended = 0
-    for user_id in unic_user_ids:
-        try:
-            if text is not None:
-                if image_id is not None:
-                    await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
-                else:
-                    await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
-            else:
-                await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
-            print(f'Сообщение доставлено {user_id}')
-            count_sended += 1
-            time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
-
-        except Exception as e:
-            print(f'Возникла ошибка при отправлении - {user_id}: {str(e)}')
+    # for user_id in unique_user_ids:
+    #     try:
+    #         if text is not None:
+    #             if image_id is not None:
+    #                 await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
+    #             else:
+    #                 await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
+    #         else:
+    #             await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
+    #         print(f'Сообщение доставлено {user_id}')
+    #         count_sended += 1
+    #         time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
+    #
+    #     except Exception as e:
+    #         print(f'Возникла ошибка при отправлении - {user_id}: {str(e)}')
 
     await bot.send_message(chat_id=sender_id,
-                           text=f'The message was sent to {count_sended}/{len(unic_user_ids)} users')
+                           text=f'The message was sent to {count_sended}/{len(unique_user_ids)} users')
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
