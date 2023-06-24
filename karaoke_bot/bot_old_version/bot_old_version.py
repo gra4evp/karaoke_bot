@@ -279,18 +279,16 @@ async def callback_mass_message_skip(callback: types.CallbackQuery, state: FSMCo
 async def send_mass_message(sender_id: int, text: str, image_id: str):
 
     with open('id_url_all.csv', encoding='u8') as fi:
-        rows = csv.reader(fi)
-        unic_user_ids = set(row[0] for row in rows)
+        unic_user_ids = set(int(row[0]) for row in csv.reader(fi))
 
     user_ids = session.query(VisitorPerformance.user_id.distinct()).all()
 
-    for user_id, in user_ids:
+    for user_id, in user_ids:  # type(user_id) - <tuple[int]>
         unic_user_ids.add(user_id)
 
     count_sended = 0
-
-    try:
-        for user_id in unic_user_ids:
+    for user_id in unic_user_ids:
+        try:
             if text is not None:
                 if image_id is not None:
                     await bot.send_photo(chat_id=user_id, photo=image_id, caption=text, parse_mode='HTML')
@@ -298,10 +296,12 @@ async def send_mass_message(sender_id: int, text: str, image_id: str):
                     await bot.send_message(chat_id=user_id, text=text, parse_mode='HTML')
             else:
                 await bot.send_photo(chat_id=user_id, photo=image_id, parse_mode='HTML')
+            print(f'Сообщение доставлено {user_id}')
             count_sended += 1
             time.sleep(0.1)  # Можно отправлять 30 сообщений в секунду
-    except:
-        print(f'Возникла ошибка при отправлении - {user_id}')
+
+        except Exception as e:
+            print(f'Возникла ошибка при отправлении - {user_id}: {str(e)}')
 
     await bot.send_message(chat_id=sender_id,
                            text=f'The message was sent to {count_sended}/{len(unic_user_ids)} users')
