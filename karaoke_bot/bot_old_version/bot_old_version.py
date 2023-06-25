@@ -13,6 +13,7 @@ from sqlalchemy_orm import VisitorPerformance, Recommendations, engine
 from sqlalchemy.orm import sessionmaker
 import time
 import csv
+
 # подключение к бд
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -28,8 +29,9 @@ user_ids = {}
 
 # admin_id = 1206756552  # владелец бара
 # admin_id = 345705084  # kuks_51
-admin_id = 375571119  # gra4evp
+# admin_id = 375571119  # gra4evp
 # admin_id = 134566371  # gleb_kukuruz
+admin_id = 5774261029  # Rayan - ведущий
 
 
 class FSMOrderTrack(StatesGroup):
