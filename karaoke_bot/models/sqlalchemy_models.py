@@ -128,6 +128,5 @@ class Account(Base):
 #     name = Column(String(255))
 
 
-
-engine = create_engine('mysql+pymysql://user:password@localhost/mydatabase', echo=True)
+engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
 Base.metadata.create_all(engine)
