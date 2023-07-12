@@ -315,7 +315,12 @@ def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(add_link,
                                         Text(startswith=['https://www.youtube.com/watch?v=',
                                                          'https://youtu.be/',
-                                                         'https://xminus.me/track/']),
+                                                         'https://xminus.me/track/',
+                                                         'https://x-minus.cc/track/',
+                                                         'https://x-minus.me/track/',
+                                                         'https://x-minus.pro/track/',
+                                                         'https://x-minus.club/track/',
+                                                         'https://xm-rus.top/track/']),
                                         state=FSMOrderTrack.track_url)
     dispatcher.register_message_handler(state_order_track_is_invalid, content_types='any',
                                         state=FSMOrderTrack.track_url)
