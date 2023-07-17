@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import create_engine
@@ -13,17 +12,16 @@ Base = declarative_base()
 class TelegramProfile(Base):
     __tablename__ = 'telegram_profiles'
 
-    account_id: Mapped[int] = mapped_column(Integer, ForeignKey('accounts.id'), unique=True, nullable=False)
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    is_bot: Mapped[bool] = mapped_column(Boolean)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), unique=True, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    is_bot: Mapped[bool]
     first_name: Mapped[str] = mapped_column(String(64))
     last_name: Mapped[str] = mapped_column(String(64))
     username: Mapped[str] = mapped_column(String(32), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10))
-    is_premium: Mapped[bool] = mapped_column(Boolean)
+    is_premium: Mapped[bool]
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
-                                                 nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
 
@@ -33,87 +31,107 @@ class TelegramProfile(Base):
 class Account(Base):
     __tablename__ = 'accounts'
 
-    id: Mapped[int] = mapped_column(Integer, autoincrement=True, primary_key=True)
+    id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True), nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
 
     telegram_profile: Mapped["TelegramProfile"] = relationship(back_populates='account')
-    ########################################### - дальше надо тестить
+
     #  One-to-many account-account_role
-    account_role: Mapped[List["AccountRole"]] = relationship(back_populates='account')
+    account_roles: Mapped[List["AccountRole"]] = relationship(back_populates='account')
 
 
 class AccountRole(Base):
     __tablename__ = 'account_roles'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)  # пока не понятно имеет ли это смысл
-    account_id: Mapped[int] = mapped_column(Integer, ForeignKey('accounts.id'))
-    role_id: Mapped[int] = mapped_column(Integer)
-    role_type: Mapped[str] = mapped_column(String(20))
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'))
+    role_id: Mapped[int]
+    role_type: Mapped[str]
 
-    account: Mapped["Account"] = relationship(back_populates='account_role')
+    account: Mapped["Account"] = relationship(back_populates='account_roles')
 
     __mapper_args__ = {
-        'polymorphic_identity': 'account_role',
-        'polymorphic_on': role_type
+        'polymorphic_identity': 'account_roles',
+        'polymorphic_on': "role_type"
     }
 
 
 class Visitor(AccountRole):
     __tablename__ = 'visitors'
 
-    id: Mapped[int] = mapped_column(Integer, ForeignKey('account_roles.role_id'), primary_key=True)
-    # selected_karaoke_id = Column(Integer)
+    id: Mapped[int] = column_property(
+        mapped_column(ForeignKey('account_roles.role_id'), primary_key=True, autoincrement=True),
+        AccountRole.id
+    )
+    selected_karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
-                                                 nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
+
+    karaoke: Mapped["Karaoke"] = relationship(back_populates='visitors')
+
     __mapper_args__ = {'polymorphic_identity': 'visitor'}
 
 
 class Moderator(AccountRole):
     __tablename__ = 'moderators'
 
-    id: Mapped[int] = mapped_column(Integer, ForeignKey('account_roles.role_id'), primary_key=True)
-    # karaoke_id = Column(Integer, ForeignKey('karaoke.id'))
+    id: Mapped[int] = column_property(
+        mapped_column(ForeignKey('account_roles.role_id'), primary_key=True, autoincrement=True),
+        AccountRole.id
+    )
+    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
+
+    karaoke: Mapped["Karaoke"] = relationship(back_populates='moderators')
+
     __mapper_args__ = {'polymorphic_identity': 'moderator'}
 
 
 class Owner(AccountRole):
     __tablename__ = 'owners'
 
-    id: Mapped[int] = mapped_column(Integer, ForeignKey('account_roles.role_id'), primary_key=True)
+    id: Mapped[int] = column_property(
+        mapped_column(ForeignKey('account_roles.role_id'), primary_key=True, autoincrement=True),
+        AccountRole.id
+    )
     password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
+
+    karaoke: Mapped["Karaoke"] = relationship(back_populates='owner')
+
     __mapper_args__ = {'polymorphic_identity': 'owner'}
 
 
 class Administrator(AccountRole):
     __tablename__ = 'administrators'
 
-    id: Mapped[int] = mapped_column(Integer, ForeignKey('account_roles.role_id'), primary_key=True)
+    id: Mapped[int] = column_property(
+        mapped_column(ForeignKey('account_roles.role_id'), primary_key=True, autoincrement=True),
+        AccountRole.id
+    )
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    __mapper_args__ = {'polymorphic_identity': 'owner'}
+    __mapper_args__ = {'polymorphic_identity': 'administrator'}
 #
 #
 # class VisitorPerformance(Base):
-#     __tablename__ = 'visitor_performance'
+#     __tablename__ = 'visitor_performances'
 #
 #     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 #     visitor_id = Column(Integer, ForeignKey('visitor.id'))
@@ -128,20 +146,24 @@ class Administrator(AccountRole):
 #     karaoke_id = Column(Integer, ForeignKey('karaoke.id'))
 #     timestamp_from = Column(DateTime)
 #     timestamp_to = Column(DateTime)
-#
-#
-# class Karaoke(Base):
-#     __tablename__ = 'karaoke'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     name = Column(String(255))
-#     active = Column(Boolean)
-#     owner_id = Column(Integer, ForeignKey('owner.id'))
-#     avatar_id = Column(Integer)
-#     description = Column(String(255))
-#     created_at = Column(DateTime)
-#     updated_at = Column(DateTime)
-#     moderators = relationship("ModeratorORM")
+
+
+class Karaoke(Base):
+    __tablename__ = 'karaoke'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(255), unique=True)
+    active: Mapped[bool]
+    owner_id: Mapped[int] = mapped_column(ForeignKey('owners.id'))
+    avatar_id: Mapped[int]
+    description: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
+                                                 server_default=func.current_timestamp(),
+                                                 onupdate=func.current_timestamp())
+    visitors: Mapped[List["Visitor"]] = relationship(back_populates='karaoke')
+    moderators: Mapped[List["Moderator"]] = relationship(back_populates='karaoke')
+    owner: Mapped["Owner"] = relationship(back_populates='karaoke')
 #
 #
 # class TrackVersion(Base):
@@ -178,7 +200,7 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     with Session() as session:
         telegram_profile = TelegramProfile(
-            id=777777777,
+            id=777777778,
             is_bot=False,
             first_name='John',
             last_name='Doe',
@@ -186,7 +208,10 @@ if __name__ == '__main__':
             language_code='en',
             is_premium=True
         )
-        account = Account(telegram_profile=telegram_profile)
+        account = Account(
+            telegram_profile=telegram_profile,
+            account_roles=[Visitor(role_id=1)]  # можно создавать аккаунт изначально без роли
+        )
         session.add(account)
         session.commit()
 
