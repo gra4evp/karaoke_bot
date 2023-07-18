@@ -40,7 +40,7 @@ class Account(Base):
     telegram_profile: Mapped["TelegramProfile"] = relationship(back_populates='account')
 
     #  One-to-many account-account_role
-    account_roles: Mapped[List["AccountRole"]] = relationship(back_populates='account')
+    roles: Mapped[List["AccountRole"]] = relationship(back_populates='account')
 
 
 class AccountRole(Base):
@@ -51,12 +51,13 @@ class AccountRole(Base):
     role_id: Mapped[int]
     role_type: Mapped[str]
 
-    account: Mapped["Account"] = relationship(back_populates='account_roles')
+    account: Mapped["Account"] = relationship(back_populates='roles')
 
     __mapper_args__ = {
         'polymorphic_identity': 'account_roles',
         'polymorphic_on': "role_type"
     }
+
 
 
 class Visitor(AccountRole):
@@ -196,11 +197,11 @@ class Karaoke(Base):
 engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)
 Base.metadata.create_all(engine)
 
-if __name__ == '__main__':
-    Session = sessionmaker(bind=engine)
+
+def sqlalchemy_test_create():
     with Session() as session:
         telegram_profile = TelegramProfile(
-            id=777777778,
+            id=8888888,
             is_bot=False,
             first_name='John',
             last_name='Doe',
@@ -209,14 +210,33 @@ if __name__ == '__main__':
             is_premium=True
         )
         account = Account(
-            telegram_profile=telegram_profile,
-            account_roles=[Visitor(role_id=1)]  # можно создавать аккаунт изначально без роли
+            telegram_profile=telegram_profile
         )
         session.add(account)
         session.commit()
 
-    # with Session() as session:
-    #     telegram_login = session.query(TelegramLogin).filter(TelegramLogin.id == 1).one()
-    #     telegram_login.first_name = 'LEpexa'
-    #     session.commit()
+
+def sqlalchemy_test_add():
+    with Session() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=8888888).first()
+        if telegram_profile is not None:
+            visitor = Visitor()
+            # visitor.role = AccountRole(account=telegram_profile.account, role_id=visitor.id)
+            # account =
+            # roles = account.roles
+            # roles.append(visitor)
+
+            session.add(visitor)
+            session.commit()
+        else:
+            print("Telegram profile not found.")
+
+
+if __name__ == '__main__':
+    Session = sessionmaker(bind=engine)
+    # sqlalchemy_test_create()
+    sqlalchemy_test_add()
+
+
+
 
