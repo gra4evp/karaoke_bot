@@ -59,7 +59,6 @@ class AccountRole(Base):
     }
 
 
-
 class Visitor(AccountRole):
     __tablename__ = 'visitors'
 
@@ -220,13 +219,8 @@ def sqlalchemy_test_add():
     with Session() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=8888888).first()
         if telegram_profile is not None:
-            visitor = Visitor()
-            # visitor.role = AccountRole(account=telegram_profile.account, role_id=visitor.id)
-            # account =
-            # roles = account.roles
-            # roles.append(visitor)
+            telegram_profile.account.roles.append(Visitor())
 
-            session.add(visitor)
             session.commit()
         else:
             print("Telegram profile not found.")
