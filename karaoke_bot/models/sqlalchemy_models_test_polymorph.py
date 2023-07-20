@@ -1,5 +1,5 @@
-from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property
+from sqlalchemy import Table, Column, Integer, String, Boolean, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property, declared_attr
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from sqlalchemy import create_engine
@@ -32,75 +32,105 @@ class Account(Base):
     __tablename__ = 'accounts'
 
     id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
-    is_visitor: Mapped[bool] = mapped_column(nullable=True)
-    is_owner: Mapped[bool] = mapped_column(nullable=True)
-    is_moderator: Mapped[bool] = mapped_column(nullable=True)
-    is_administrator: Mapped[bool] = mapped_column(nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True), nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
 
     telegram_profile: Mapped["TelegramProfile"] = relationship(back_populates='account')
-    visitor: Mapped["Visitor"] = relationship(back_populates='account')
-    owner: Mapped["Owner"] = relationship(back_populates='account')
-    moderator: Mapped["Moderator"] = relationship(back_populates='account')
-    administrator: Mapped["Administrator"] = relationship(back_populates='account')
+
+    #  One-to-many account-account_role
+    roles: Mapped[List["AccountRole"]] = relationship(back_populates='account')
 
 
-class Visitor(Base):
+class AccountRole(Base):
+    __tablename__ = 'account_roles'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'))
+    role_id: Mapped[int]
+    role_type: Mapped[str]
+
+    account: Mapped["Account"] = relationship(back_populates='roles')
+
+    __mapper_args__ = {
+        'polymorphic_on': 'role_type'
+    }
+
+
+class Visitor(AccountRole):
     __tablename__ = 'visitors'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     selected_karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
 
-    account: Mapped["Account"] = relationship(back_populates='visitor')
+
+
     karaoke: Mapped["Karaoke"] = relationship(back_populates='visitors')
     performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='visitor')
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'visitor',
+        'inherit_condition': id == AccountRole.role_id
+    }
 
-class Moderator(Base):
+
+class Moderator(AccountRole):
     __tablename__ = 'moderators'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    account: Mapped["Account"] = relationship(back_populates='moderator')
+
     karaoke: Mapped["Karaoke"] = relationship(back_populates='moderators')
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'moderator',
+        'inherit_condition': id == AccountRole.role_id
+    }
 
-class Owner(Base):
+
+class Owner(AccountRole):
     __tablename__ = 'owners'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    account: Mapped["Account"] = relationship(back_populates='owner')
+
     karaoke: Mapped["Karaoke"] = relationship(back_populates='owner')
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'owner',
+        'inherit_condition': id == AccountRole.role_id
+    }
 
-class Administrator(Base):
+
+class Administrator(AccountRole):
     __tablename__ = 'administrators'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    account: Mapped["Account"] = relationship(back_populates='administrator')
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'administrator',
+        'inherit_condition': id == AccountRole.role_id
+    }
 
 
 class VisitorPerformance(Base):
@@ -189,6 +219,8 @@ class Artist(Base):
     name: Mapped[str] = mapped_column(String(64))
     tracks: Mapped[List["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
 
+
+
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
 engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)
 Base.metadata.create_all(engine)
@@ -237,3 +269,7 @@ if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
     sqlalchemy_create_account(id=1234, first_name='Petr', last_name='Grachev', username='gra4evp')
     sqlalchemy_add_role(telegram_id=1234, role='visitor')
+
+
+
+

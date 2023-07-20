@@ -54,7 +54,6 @@ class AccountRole(Base):
     account: Mapped["Account"] = relationship(back_populates='roles')
 
     __mapper_args__ = {
-        'polymorphic_identity': 'account_roles',
         'polymorphic_on': "role_type"
     }
 
@@ -224,14 +223,14 @@ engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)
 Base.metadata.create_all(engine)
 
 
-def sqlalchemy_test_create():
+def sqlalchemy_create_account(id, first_name, last_name, username):
     with Session() as session:
         telegram_profile = TelegramProfile(
-            id=8888888,
+            id=id,
             is_bot=False,
-            first_name='John',
-            last_name='Doe',
-            username='johndoe',
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
             language_code='en',
             is_premium=True
         )
@@ -242,11 +241,21 @@ def sqlalchemy_test_create():
         session.commit()
 
 
-def sqlalchemy_test_add():
+def sqlalchemy_add_role(telegram_id: int, role: str):
     with Session() as session:
-        telegram_profile = session.query(TelegramProfile).filter_by(id=8888888).first()
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
-            telegram_profile.account.roles.append(Visitor())
+            match role:
+                case 'visitor':
+                    role = Visitor(selected_karaoke_id=1)
+                case 'owner':
+                    role = Owner()
+                case 'administrator':
+                    role = Administrator()
+                case 'moderator':
+                    role = Moderator()
+            telegram_profile.account.roles.append(role)
+            print(telegram_profile.account.roles)
 
             session.commit()
         else:
@@ -255,8 +264,8 @@ def sqlalchemy_test_add():
 
 if __name__ == '__main__':
     Session = sessionmaker(bind=engine)
-    # sqlalchemy_test_create()
-    sqlalchemy_test_add()
+    sqlalchemy_create_account(id=1234, first_name='Petr', last_name='Grachev', username='gra4evp')
+    sqlalchemy_add_role(telegram_id=1234, role='visitor')
 
 
 
