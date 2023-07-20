@@ -121,8 +121,8 @@ class Session(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
-    # timestamp_from = Column(DateTime)
-    # timestamp_to = Column(DateTime)
+    timestamp_from: Mapped[DateTime] = mapped_column(DATETIME)
+    timestamp_to: Mapped[DateTime] = mapped_column(DATETIME)
 
     performance: Mapped["VisitorPerformance"] = relationship(back_populates='session')
     karaoke: Mapped["Karaoke"] = relationship(back_populates='session')
@@ -151,7 +151,7 @@ class TrackVersion(Base):
     __tablename__ = 'track_versions'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    track_id: Mapped[int] = mapped_column(ForeignKey('track.id'))
+    track_id: Mapped[int] = mapped_column(ForeignKey('tracks.id'))
     url: Mapped[str] = mapped_column(String(2048), index=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
@@ -179,9 +179,7 @@ class Track(Base):
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
     versions: Mapped[List["TrackVersion"]] = relationship(back_populates='track')
-    artists: Mapped[List["Artist"]] = relationship(
-        secondary=tracks_artists, back_populates="tracks"
-    )
+    artists: Mapped[List["Artist"]] = relationship(secondary=tracks_artists, back_populates="tracks")
 
 
 class Artist(Base):
@@ -189,9 +187,7 @@ class Artist(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(64))
-    tracks: Mapped[List["Track"]] = relationship(
-        secondary=tracks_artists, back_populates="artists"
-    )
+    tracks: Mapped[List["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
 
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
 engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)

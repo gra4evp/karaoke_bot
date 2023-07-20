@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
+from sqlalchemy import Table, Column, Integer, String, Boolean, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -73,6 +73,7 @@ class Visitor(AccountRole):
                                                  onupdate=func.current_timestamp())
 
     karaoke: Mapped["Karaoke"] = relationship(back_populates='visitors')
+    performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='visitor')
 
     __mapper_args__ = {'polymorphic_identity': 'visitor'}
 
@@ -128,24 +129,31 @@ class Administrator(AccountRole):
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
     __mapper_args__ = {'polymorphic_identity': 'administrator'}
-#
-#
-# class VisitorPerformance(Base):
-#     __tablename__ = 'visitor_performances'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     visitor_id = Column(Integer, ForeignKey('visitor.id'))
-#     track_version_id = Column(Integer, ForeignKey('track_version.id'))
-#     session_id = Column(Integer, ForeignKey('session.id'))
-#
-#
-# class Session(Base):
-#     __tablename__ = 'sessions'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     karaoke_id = Column(Integer, ForeignKey('karaoke.id'))
-#     timestamp_from = Column(DateTime)
-#     timestamp_to = Column(DateTime)
+
+
+class VisitorPerformance(Base):
+    __tablename__ = 'visitor_performances'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    visitor_id: Mapped[int] = mapped_column(ForeignKey('visitors.id'))
+    track_version_id: Mapped[int] = mapped_column(ForeignKey('track_versions.id'))
+    session_id: Mapped[int] = mapped_column(ForeignKey('sessions.id'))
+
+    visitor: Mapped["Visitor"] = relationship(back_populates='performances')
+    session: Mapped["Session"] = relationship(back_populates='performance')
+    track_version: Mapped["TrackVersion"] = relationship(back_populates='performances')
+
+
+class Session(Base):
+    __tablename__ = 'sessions'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
+    timestamp_from: Mapped[DateTime] = mapped_column(DATETIME)
+    timestamp_to: Mapped[DateTime] = mapped_column(DATETIME)
+
+    performance: Mapped["VisitorPerformance"] = relationship(back_populates='session')
+    karaoke: Mapped["Karaoke"] = relationship(back_populates='session')
 
 
 class Karaoke(Base):
@@ -164,32 +172,51 @@ class Karaoke(Base):
     visitors: Mapped[List["Visitor"]] = relationship(back_populates='karaoke')
     moderators: Mapped[List["Moderator"]] = relationship(back_populates='karaoke')
     owner: Mapped["Owner"] = relationship(back_populates='karaoke')
-#
-#
-# class TrackVersion(Base):
-#     __tablename__ = 'track_versions'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     track_id = Column(Integer, ForeignKey('track.id'))
-#     url = Column(String(255))
-#     created_at = Column(DateTime)
-#     updated_at = Column(DateTime)
-#
-#
-# class Track(Base):
-#     __tablename__ = 'tracks'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     name = Column(String(255))
-#     created_at = Column(DateTime)
-#     updated_at = Column(DateTime)
-#
-#
-# class Artist(Base):
-#     __tablename__ = 'artist'
-#
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-#     name = Column(String(255))
+    session: Mapped["Session"] = relationship(back_populates='karaoke')
+
+
+class TrackVersion(Base):
+    __tablename__ = 'track_versions'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    track_id: Mapped[int] = mapped_column(ForeignKey('tracks.id'))
+    url: Mapped[str] = mapped_column(String(2048), index=True)
+    created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
+                                                 server_default=func.current_timestamp(),
+                                                 onupdate=func.current_timestamp())
+    performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='track_version')
+    track: Mapped["Track"] = relationship(back_populates='versions')
+
+
+tracks_artists = Table(
+    'tracks_artists',
+    Base.metadata,
+    Column('track_id', Integer, ForeignKey('tracks.id')),
+    Column('artist_id', Integer, ForeignKey('artist.id'))
+)
+
+
+class Track(Base):
+    __tablename__ = 'tracks'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
+    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
+                                                 server_default=func.current_timestamp(),
+                                                 onupdate=func.current_timestamp())
+    versions: Mapped[List["TrackVersion"]] = relationship(back_populates='track')
+    artists: Mapped[List["Artist"]] = relationship(secondary=tracks_artists, back_populates="tracks")
+
+
+class Artist(Base):
+    __tablename__ = 'artist'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(64))
+    tracks: Mapped[List["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
+
 
 
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
