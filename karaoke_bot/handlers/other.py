@@ -5,10 +5,17 @@ from karaoke_bot.keyboards import other_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from karaoke_bot.config import START_TEXT
+# from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
+from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 
 
 async def start_command(message: types.Message):
     await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
+
+    try:
+        create_or_update_telegram_profile(user=message.from_user)
+    except Exception as e:
+        print(f"Error occurred: {e}")
 
 
 async def cancel_command(message: types.Message, state: FSMContext):

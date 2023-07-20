@@ -19,7 +19,7 @@ class TelegramProfile(Base):
     last_name: Mapped[str] = mapped_column(String(64))
     username: Mapped[str] = mapped_column(String(32), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10))
-    is_premium: Mapped[bool]
+    is_premium: Mapped[bool] = mapped_column(nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
@@ -51,7 +51,7 @@ class Account(Base):
 class Visitor(Base):
     __tablename__ = 'visitors'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
     selected_karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
@@ -66,7 +66,7 @@ class Visitor(Base):
 class Moderator(Base):
     __tablename__ = 'moderators'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
     karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
@@ -80,7 +80,7 @@ class Moderator(Base):
 class Owner(Base):
     __tablename__ = 'owners'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
     password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
@@ -94,7 +94,7 @@ class Owner(Base):
 class Administrator(Base):
     __tablename__ = 'administrators'
 
-    id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
+    account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
@@ -107,7 +107,7 @@ class VisitorPerformance(Base):
     __tablename__ = 'visitor_performances'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    visitor_id: Mapped[int] = mapped_column(ForeignKey('visitors.id'))
+    visitor_id: Mapped[int] = mapped_column(ForeignKey('visitors.account_id'))
     track_version_id: Mapped[int] = mapped_column(ForeignKey('track_versions.id'))
     session_id: Mapped[int] = mapped_column(ForeignKey('sessions.id'))
 
@@ -134,7 +134,7 @@ class Karaoke(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True)
     active: Mapped[bool]
-    owner_id: Mapped[int] = mapped_column(ForeignKey('owners.id'))
+    owner_id: Mapped[int] = mapped_column(ForeignKey('owners.account_id'))
     avatar_id: Mapped[int]
     description: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
@@ -189,9 +189,11 @@ class Artist(Base):
     name: Mapped[str] = mapped_column(String(64))
     tracks: Mapped[List["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
 
+
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
 engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)
 Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
 
 
 def sqlalchemy_create_account(id, first_name, last_name, username):
@@ -216,17 +218,17 @@ def sqlalchemy_add_role(telegram_id: int, role: str):
     with Session() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
+            account = telegram_profile.account
             match role:
                 case 'visitor':
-                    role = Visitor(selected_karaoke_id=1)
+                    account.is_visitor = True
+                    account.visitor = Visitor(selected_karaoke_id=1)
                 case 'owner':
-                    role = Owner()
+                    pass
                 case 'administrator':
-                    role = Administrator()
+                    pass
                 case 'moderator':
-                    role = Moderator()
-            telegram_profile.account.roles.append(role)
-            print(telegram_profile.account.roles)
+                    pass
 
             session.commit()
         else:
@@ -234,6 +236,5 @@ def sqlalchemy_add_role(telegram_id: int, role: str):
 
 
 if __name__ == '__main__':
-    Session = sessionmaker(bind=engine)
     sqlalchemy_create_account(id=1234, first_name='Petr', last_name='Grachev', username='gra4evp')
-    sqlalchemy_add_role(telegram_id=1234, role='visitor')
+    # sqlalchemy_add_role(telegram_id=1234, role='visitor')
