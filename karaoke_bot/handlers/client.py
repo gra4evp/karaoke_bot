@@ -1,13 +1,14 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.states.client_states import FSMOrderTrack, FSMKaraokeSearch, FSMNewKaraoke
+from karaoke_bot.states.client_states import OrderTrack, KaraokeSearch, NewKaraoke
 from karaoke_bot.create_bot import bot
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
+from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke
 
 
 async def new_karaoke_command(message: types.Message):
@@ -15,79 +16,140 @@ async def new_karaoke_command(message: types.Message):
                          f"To make it easier for users to find you, "
                          f"you can come up with a <b>name</b> similar to your establishment.", parse_mode='HTML')
 
-    await FSMNewKaraoke.karaoke_name.set()
+    await NewKaraoke.name.set()
 
 
 async def karaoke_name_registration(message: types.Message, state: FSMContext):
-
     karaoke_name = message.text
-
-    if not sqlite_db.karaoke_is_exists(karaoke_name):
+    if karaoke_not_exists(karaoke_name):
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
 
-        await message.answer("Now come up with a <b>password</b> for your virtual karaoke.", parse_mode='HTML')
-        await FSMNewKaraoke.next()
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip avatar'))
+        await message.answer(
+            "Now send the photo you want to set as your karaoke avatar.",
+            reply_markup=keyboard,
+            parse_mode='HTML'
+        )
+        await NewKaraoke.avatar.set()
     else:
         await message.reply("🔒 Sorry, this <b>name</b> is already taken.", parse_mode='HTML')
 
 
 async def state_karaoke_name_is_invalid(message: types.Message):
-    await message.reply("The <b>karaoke name</b> must be presented in text and contain't any punctuation marks, "
-                        "except for: <b>\"$*&_@\"</b>\n\n"
-                        "If you want to stop filling out the questionnaire - send the command - /cancel",
-                        parse_mode='HTML')
+    await message.reply(
+        "The <b>karaoke name</b> must be presented in text and contain't any punctuation marks, "
+        "except for: <b>\"$*&_@\"</b>\n\n"
+        "If you want to stop filling out the questionnaire - send the command - /cancel",
+        parse_mode='HTML'
+    )
 
 
-async def karaoke_password_registration(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['karaoke_password'] = message.text
+# async def karaoke_password_registration(message: types.Message, state: FSMContext):
+#     async with state.proxy() as data:
+#         data['karaoke_password'] = message.text
+#
+#     keyboard = InlineKeyboardMarkup()
+#     keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip avatar'))
+#     await message.answer("Now send the photo you would like to set as your avatar", reply_markup=keyboard)
+#     await NewKaraoke.next()
 
-    await message.answer("Now send the photo you would like to set as your avatar")
-    await FSMNewKaraoke.next()
 
-
-async def state_karaoke_password_is_invalid(message: types.Message):
-    await message.reply("The <b>karaoke password</b> must be presented in text and contain't any punctuation marks, "
-                        "except for: <b>\"$*&_@\"</b>\n\n"
-                        "If you want to stop filling out the questionnaire - send the command - /cancel",
-                        parse_mode='HTML')
+# async def state_karaoke_password_is_invalid(message: types.Message):
+#     await message.reply(
+#         "The <b>karaoke password</b> must be presented in text and contain't any punctuation marks, "
+#         "except for: <b>\"$*&_@\"</b>\n\n"
+#         "If you want to stop filling out the questionnaire - send the command - /cancel",
+#         parse_mode='HTML'
+#     )
 
 
 async def karaoke_avatar_registration(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['karaoke_avatar'] = message.photo[0].file_id
-    await owner_data_registration(message, state)
+    print(message.photo[0].file_id)
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip description'))
+    await message.answer("Now come up with descriptions for your karaoke", reply_markup=keyboard)
+    await NewKaraoke.description.set()
 
 
 async def state_karaoke_avatar_is_invalid(message: types.Message):
-    await message.reply("It seems you sent something wrong. "
-                        "Please send a <b>photo</b> to the avatar for your karaoke.\n\n"
-                        "If you want to stop filling out the questionnaire - send the command - /cancel",
-                        parse_mode='HTML')
+    await message.reply(
+        "It seems you sent something wrong. "
+        "Please send a <b>photo</b> to the avatar for your karaoke.\n\n"
+        "If you want to stop filling out the questionnaire - send the command - /cancel",
+        parse_mode='HTML'
+    )
+
+
+async def karaoke_description_registration(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['description'] = message.html_text
+    await new_karaoke_command_confirm(message.from_user.id, state)
+
+
+async def state_karaoke_description_is_invalid(message: types.Message) -> None:
+    await message.reply(
+        "The maximum length of the <b>description</b> should not exceed 500 characters",
+        parse_mode='HTML'
+    )
+
+
+async def new_karaoke_command_confirm(user_id: int, state: FSMContext) -> None:
+
+    confirm_text = "<b>CONFIRM THE CREATION OF KARAOKE</b>"
+    async with state.proxy() as data:
+        name = data.get('karaoke_name')
+        avatar_id = data.get('karaoke_avatar')
+        description = data.get('description')
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
+    keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
+    keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='new_karaoke delete'))
+
+    if avatar_id is not None:
+        await bot.send_photo(
+            chat_id=user_id,
+            photo=avatar_id,
+            caption=f'{confirm_text}\n\n{name}',
+            reply_markup=keyboard,
+            parse_mode='HTML'
+        )
+    else:
+        await bot.send_message(chat_id=user_id, text=description, reply_markup=keyboard, parse_mode='HTML')
+
+    await NewKaraoke.confirm.set()
 
 
 async def owner_data_registration(message: types.Message, state: FSMContext):
 
     async with state.proxy() as data:
         karaoke_name = data.get('karaoke_name')
-        password = data.get('karaoke_password')
         avatar_id = data.get('karaoke_avatar')
+        description = data.get('description')
 
-    onwer_id = message.from_user.id
-    first_name = message.from_user.first_name
-    last_name = message.from_user.last_name
-    username = message.from_user.username
-
-    await sqlite_db.sql_add_owner_record(karaoke_name, password, avatar_id, onwer_id, first_name, last_name, username)
-
-    await message.answer("You have created your <b>virtual karaoke</b>!", parse_mode='HTML')
-    await state.finish()
+    try:
+        create_karaoke(
+            telegram_id=message.from_user.id,
+            name=karaoke_name,
+            avatar_id=avatar_id,
+            description=description
+        )
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        await message.answer("Oops, something went wrong, we are already working on the error")
+    else:
+        await message.answer("You have created your <b>virtual karaoke</b>!", parse_mode='HTML')
+    finally:
+        await state.finish()
 
 
 async def search_karaoke_command(message: types.Message):
     await message.answer(f"Enter the <b>name</b> of the virtual karaoke where you plan to perform.", parse_mode='HTML')
-    await FSMKaraokeSearch.karaoke_name.set()
+    await KaraokeSearch.name.set()
 
 
 async def callback_search_karaoke_command(callback: types.CallbackQuery):
@@ -119,9 +181,11 @@ async def find_karaoke(message: types.Message, state: FSMContext):
         await bot.send_photo(user_id, avatar_id, caption=caption, reply_markup=keyboard, parse_mode='HTML')
         await state.finish()
     else:
-        await message.reply("Oops, there is no such karaoke yet.\n\n"
-                            "Try to get the <b>name</b> from the administrator of the institution where you are.",
-                            parse_mode='HTML')
+        await message.reply(
+            "Oops, there is no such karaoke yet.\n\n"
+            "Try to get the <b>name</b> from the administrator of the institution where you are.",
+            parse_mode='HTML'
+        )
 
 
 async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
@@ -160,7 +224,7 @@ async def order_track_command(message: types.Message, state: FSMContext):
             data['owner_id'] = owner_id
 
         await message.answer("Send a <b>link</b> to the track on YouTube", parse_mode='HTML')
-        await FSMOrderTrack.link.set()
+        await OrderTrack.link.set()
 
     else:
         keyboard = InlineKeyboardMarkup()
@@ -185,12 +249,14 @@ async def add_link(message: types.Message, state: FSMContext):
 
 
 async def state_link_is_invalid(message: types.Message):
-    await message.reply("It seems you sent something wrong."
-                        "Please send a <b>link</b> to the track on YouTube\n\n"
-                        "The <b>link</b> must be in the format:\n"
-                        "✅ - https://youtu.be/\n"
-                        "✅ - https://www.youtube.com/",
-                        parse_mode='HTML')
+    await message.reply(
+        "It seems you sent something wrong."
+        "Please send a <b>link</b> to the track on YouTube\n\n"
+        "The <b>link</b> must be in the format:\n"
+        "✅ - https://youtu.be/\n"
+        "✅ - https://www.youtube.com/",
+        parse_mode='HTML'
+    )
 
 
 async def show_my_orders_command(message: types.Message):
@@ -225,29 +291,37 @@ def register_handlers_client(dispatcher: Dispatcher):
     dispatcher.register_message_handler(
         karaoke_name_registration,
         lambda message: all(c in ascii_letters + digits + '$*&_@' for c in message.text) and len(message.text) <= 20,
-        state=FSMNewKaraoke.karaoke_name)
+        state=NewKaraoke.name
+    )
+
+    # dispatcher.register_message_handler(
+    #     karaoke_password_registration,
+    #     lambda message: all(c in ascii_letters + digits + '$*&_@' for c in message.text) and len(message.text) <= 20,
+    #     state=NewKaraoke.password)
+    # dispatcher.register_message_handler(state_karaoke_password_is_invalid,
+    #                                     content_types='any',
+    #                                     state=NewKaraoke.password)
+
+    dispatcher.register_message_handler(karaoke_avatar_registration, content_types=['photo'], state=NewKaraoke.avatar)
+    dispatcher.register_message_handler(state_karaoke_avatar_is_invalid, content_types='any', state=NewKaraoke.avatar)
 
     dispatcher.register_message_handler(
-        karaoke_password_registration,
-        lambda message: all(c in ascii_letters + digits + '$*&_@' for c in message.text) and len(message.text) <= 20,
-        state=FSMNewKaraoke.karaoke_password)
-    dispatcher.register_message_handler(state_karaoke_password_is_invalid,
-                                        content_types='any',
-                                        state=FSMNewKaraoke.karaoke_password)
-
-    dispatcher.register_message_handler(karaoke_avatar_registration,
-                                        content_types=['photo'],
-                                        state=FSMNewKaraoke.karaoke_avatar)
-    dispatcher.register_message_handler(state_karaoke_avatar_is_invalid,
-                                        content_types='any',
-                                        state=FSMNewKaraoke.karaoke_avatar)
+        karaoke_description_registration,
+        lambda message: len(message.text) <= 500,
+        state=NewKaraoke.description
+    )
+    dispatcher.register_message_handler(
+        state_karaoke_description_is_invalid,
+        content_types='any',
+        state=NewKaraoke.description
+    )
 
     dispatcher.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
     dispatcher.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'))
 
-    dispatcher.register_message_handler(find_karaoke, state=FSMKaraokeSearch.karaoke_name)
+    dispatcher.register_message_handler(find_karaoke, state=KaraokeSearch.name)
     dispatcher.register_message_handler(state_karaoke_name_is_invalid, content_types='any',
-                                        state=[FSMKaraokeSearch.karaoke_name, FSMNewKaraoke.karaoke_name])
+                                        state=[KaraokeSearch.name, NewKaraoke.name])
 
     dispatcher.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
 
@@ -256,8 +330,8 @@ def register_handlers_client(dispatcher: Dispatcher):
                                         Text(startswith=['https://www.youtube.com/watch?v=',
                                                          'https://youtu.be/',
                                                          'https://xminus.me/track/']),
-                                        state=FSMOrderTrack.link)
-    dispatcher.register_message_handler(state_link_is_invalid, content_types='any', state=FSMOrderTrack.link)
+                                        state=OrderTrack.link)
+    dispatcher.register_message_handler(state_link_is_invalid, content_types='any', state=OrderTrack.link)
 
     dispatcher.register_message_handler(show_my_orders_command, commands=['show_my_orders'])
 
