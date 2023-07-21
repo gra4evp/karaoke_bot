@@ -6,6 +6,7 @@ class NewKaraoke(StatesGroup):
     # password = State()
     avatar = State()
     description = State()
+    confirm = State()
 
 
 class KaraokeSearch(StatesGroup):
