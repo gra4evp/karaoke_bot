@@ -81,7 +81,7 @@ class Owner(Base):
     __tablename__ = 'owners'
 
     account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
-    password: Mapped[str] = mapped_column(String(255))
+    # password: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
@@ -193,11 +193,11 @@ class Artist(Base):
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
 engine = create_engine('sqlite:///karaoke_sqlaclhemy.db', echo=True)
 Base.metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+AlchemySession = sessionmaker(bind=engine)
 
 
 def sqlalchemy_create_account(id, first_name, last_name, username):
-    with Session() as session:
+    with AlchemySession() as session:
         telegram_profile = TelegramProfile(
             id=id,
             is_bot=False,
@@ -215,7 +215,7 @@ def sqlalchemy_create_account(id, first_name, last_name, username):
 
 
 def sqlalchemy_add_role(telegram_id: int, role: str):
-    with Session() as session:
+    with AlchemySession() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
             account = telegram_profile.account
