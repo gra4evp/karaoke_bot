@@ -37,7 +37,6 @@ def karaoke_not_exists(karaoke_name: str) -> bool:
     """
     with AlchemySession() as session:
         karaoke = session.query(Karaoke).filter_by(name=karaoke_name).scalar()
-    print(karaoke)
     return karaoke is None
 
 
