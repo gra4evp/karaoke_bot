@@ -122,46 +122,56 @@ async def new_karaoke_command_confirm(message: types.Message, state: FSMContext)
 
 
 async def callback_new_karaoke_confirm(callback: types.CallbackQuery, state: FSMContext):
-    action = callback.data.split(' ')[-1]
     await callback.answer()
 
-    keyboard = InlineKeyboardMarkup()
-    if action == 'create':
-        keyboard.add(
-            InlineKeyboardButton("✅ Create", callback_data='new_karaoke force_create'),
-            InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
-        )
-        await callback.message.edit_reply_markup(keyboard)
-
-    elif action == 'force_create':
-        await callback.answer("✅ Karaoke successfully created!", show_alert=True)
-        await callback.message.delete()
-        await owner_data_registration(message=callback.message, state=state)
-
-    elif action == 'edit':
-        keyboard.add(InlineKeyboardButton("💬 Edit karaoke name", callback_data='new_karaoke edit_text'))
-        keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit_avatar'))
-        keyboard.add(InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit_description'))
-        keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
-        await callback.message.edit_reply_markup(keyboard)
-
-    elif action == 'cancel':
-        keyboard.add(
-            InlineKeyboardButton("❌ Cancel", callback_data='new_karaoke force_cancel'),
-            InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
-        )
-        await callback.message.edit_reply_markup(keyboard)
-
-    elif action == 'force_cancel':
-        await callback.message.answer("❌ Create karaoke canceled")
-        await callback.message.delete()
-        await state.finish()
-
-    elif action == 'back':
-        keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
-        keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
-        keyboard.add(InlineKeyboardButton('❌ Cancel', callback_data='new_karaoke cancel'))
-        await callback.message.edit_reply_markup(keyboard)
+    callback_data = callback.data.split(' ')
+    match callback_data:
+        case _, cmd, *arg:  # если 2 аргумента, то arg = []
+            keyboard = InlineKeyboardMarkup()
+            if arg:
+                arg = arg[0]
+            match cmd:
+                case 'create':
+                    if arg == 'force':
+                        await callback.answer("✅ Karaoke successfully created!", show_alert=True)
+                        await callback.message.delete()
+                        await owner_data_registration(message=callback.message, state=state)
+                    else:
+                        keyboard.add(
+                            InlineKeyboardButton("✅ Create", callback_data='new_karaoke create force'),
+                            InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
+                        )
+                        await callback.message.edit_reply_markup(keyboard)
+                case 'edit':
+                    if arg == 'text':
+                        pass
+                    if arg == 'avatar':
+                        pass
+                    if arg == 'description':
+                        pass
+                    else:
+                        keyboard.add(InlineKeyboardButton("💬 Edit karaoke name", callback_data='new_karaoke edit text'))
+                        keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
+                        keyboard.add(
+                            InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit description'))
+                        keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
+                        await callback.message.edit_reply_markup(keyboard)
+                case 'cancel':
+                    if arg == 'force':
+                        await callback.message.answer("❌ Create karaoke canceled")
+                        await callback.message.delete()
+                        await state.finish()
+                    else:
+                        keyboard.add(
+                            InlineKeyboardButton("❌ Cancel", callback_data='new_karaoke cancel force'),
+                            InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
+                        )
+                        await callback.message.edit_reply_markup(keyboard)
+                case 'back':
+                    keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
+                    keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
+                    keyboard.add(InlineKeyboardButton('❌ Cancel', callback_data='new_karaoke cancel'))
+                    await callback.message.edit_reply_markup(keyboard)
 
 
 async def owner_data_registration(message: types.Message, state: FSMContext):
@@ -355,17 +365,7 @@ def register_handlers_client(dispatcher: Dispatcher):
         state=NewKaraoke.description
     )
 
-    dispatcher.register_callback_query_handler(
-        callback_new_karaoke_confirm,
-        Text(equals=[
-            'new_karaoke create',
-            'new_karaoke force_create',
-            'new_karaoke edit',
-            'new_karaoke cancel',
-            'new_karaoke force_cancel',
-            'new_karaoke back'
-        ])
-    )
+    dispatcher.register_callback_query_handler(callback_new_karaoke_confirm, Text(startswith='new_karaoke'))
 
     dispatcher.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
     dispatcher.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'))
