@@ -46,7 +46,14 @@ def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str
         if telegram_profile is not None:
             account = telegram_profile.account
             account.is_owner = True
-            account.owner = Owner(karaoke=Karaoke(name=name, avatar_id=avatar_id, description=description))
+            account.owner = Owner(
+                karaoke=Karaoke(
+                    name=name,
+                    is_active=True,
+                    avatar_id=avatar_id,
+                    description=description
+                )
+            )
         else:
             raise ValueError("Telegram profile should have already existed")
         session.commit()

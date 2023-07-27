@@ -133,9 +133,9 @@ class Karaoke(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True)
-    active: Mapped[bool]
+    is_active: Mapped[bool]
     owner_id: Mapped[int] = mapped_column(ForeignKey('owners.account_id'))
-    avatar_id: Mapped[int]
+    avatar_id: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
