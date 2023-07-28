@@ -422,7 +422,7 @@ def register_client_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(
         state_karaoke_description_is_invalid,
         content_types='any',
-        state=NewKaraoke.description
+        state=[NewKaraoke.description, NewKaraoke.edit_description]
     )
 
     dispatcher.register_callback_query_handler(
