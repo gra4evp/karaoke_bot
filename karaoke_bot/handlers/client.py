@@ -29,10 +29,9 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
             data['karaoke_name'] = karaoke_name
 
         current_state = await state.get_state()
-        print(current_state)
         keyboard = InlineKeyboardMarkup()
         if current_state == 'NewKaraoke:name':
-            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip avatar'))
+            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip avatar'))
             await message.answer(
                 "Now send the photo you want to set as your karaoke avatar.",
                 reply_markup=keyboard,
@@ -40,12 +39,9 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
             )
             await NewKaraoke.avatar.set()
         else:
-            await NewKaraoke.confirm.set()
-
             keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
             keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
             await message.answer('✅ Success! <b>Name</b> updated.', reply_markup=keyboard, parse_mode='HTML')
-            # await new_karaoke_command_confirm(message, state)
     else:
         await message.reply("🔒 Sorry, this <b>name</b> is already taken.", parse_mode='HTML')
 
@@ -86,11 +82,9 @@ async def karaoke_avatar_registration(message: types.Message, state: FSMContext)
     keyboard = InlineKeyboardMarkup()
     if current_state == 'NewKaraoke:avatar':
         await NewKaraoke.description.set()
-        keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip description'))
+        keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
         await message.answer("Now come up with descriptions for your karaoke", reply_markup=keyboard)
     else:
-        await NewKaraoke.confirm.set()
-
         keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
         keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
         await message.answer('✅ Success! <b>Avatar</b> updated.', reply_markup=keyboard, parse_mode='HTML')
@@ -112,8 +106,6 @@ async def karaoke_description_registration(message: types.Message, state: FSMCon
     if current_state == 'NewKaraoke:description':
         await new_karaoke_command_confirm(message, state)
     else:
-        await NewKaraoke.confirm.set()
-
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
         keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
@@ -131,7 +123,6 @@ async def new_karaoke_command_confirm(
         message: types.Message,
         state: FSMContext,
         keyboard: InlineKeyboardMarkup | None = None) -> None:
-    await NewKaraoke.confirm.set()
 
     confirm_text = "<b>CONFIRM THE CREATION OF KARAOKE</b>"
     async with state.proxy() as data:
@@ -188,6 +179,13 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
         case ('edit', 'description'):
             await NewKaraoke.edit_description.set()
             await callback.message.answer('What description would you like?')
+        case ('skip', 'avatar'):
+            print(11111111111111111111111111111111111111111111111111111111111111)
+            await NewKaraoke.description.set()
+            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
+            await callback.message.answer("Now come up with descriptions for your karaoke", reply_markup=keyboard)
+        case ('skip', 'description'):
+            await new_karaoke_command_confirm(message=callback.message, state=state)
         case ('cancel',):
             keyboard.add(
                 InlineKeyboardButton("❌ Cancel", callback_data='new_karaoke cancel force'),
@@ -425,11 +423,7 @@ def register_client_handlers(dispatcher: Dispatcher):
         state=[NewKaraoke.description, NewKaraoke.edit_description]
     )
 
-    dispatcher.register_callback_query_handler(
-        callback_new_karaoke,
-        Text(startswith='new_karaoke'),
-        state=[NewKaraoke.confirm]
-    )
+    dispatcher.register_callback_query_handler(callback_new_karaoke, Text(startswith='new_karaoke'), state='*')
 
     dispatcher.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
     dispatcher.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'))
