@@ -6,6 +6,9 @@ class NewKaraoke(StatesGroup):
     # password = State()
     avatar = State()
     description = State()
+    edit_name = State()
+    edit_avatar = State()
+    edit_description = State()
     confirm = State()
 
 
