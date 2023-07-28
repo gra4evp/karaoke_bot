@@ -55,25 +55,6 @@ async def state_karaoke_name_is_invalid(message: types.Message):
     )
 
 
-# async def karaoke_password_registration(message: types.Message, state: FSMContext):
-#     async with state.proxy() as data:
-#         data['karaoke_password'] = message.text
-#
-#     keyboard = InlineKeyboardMarkup()
-#     keyboard.add(InlineKeyboardButton(text='Skip', callback_data='karaoke_registration_skip avatar'))
-#     await message.answer("Now send the photo you would like to set as your avatar", reply_markup=keyboard)
-#     await NewKaraoke.next()
-
-
-# async def state_karaoke_password_is_invalid(message: types.Message):
-#     await message.reply(
-#         "The <b>karaoke password</b> must be presented in text and contain't any punctuation marks, "
-#         "except for: <b>\"$*&_@\"</b>\n\n"
-#         "If you want to stop filling out the questionnaire - send the command - /cancel",
-#         parse_mode='HTML'
-#     )
-
-
 async def karaoke_avatar_registration(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['karaoke_avatar'] = message.photo[0].file_id
@@ -180,7 +161,6 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await NewKaraoke.edit_description.set()
             await callback.message.answer('What description would you like?')
         case ('skip', 'avatar'):
-            print(11111111111111111111111111111111111111111111111111111111111111)
             await NewKaraoke.description.set()
             keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
             await callback.message.answer("Now come up with descriptions for your karaoke", reply_markup=keyboard)
@@ -393,14 +373,6 @@ def register_client_handlers(dispatcher: Dispatcher):
         state=[NewKaraoke.name, NewKaraoke.edit_name]
     )
 
-    # dispatcher.register_message_handler(
-    #     karaoke_password_registration,
-    #     lambda message: all(c in ascii_letters + digits + '$*&_@' for c in message.text) and len(message.text) <= 20,
-    #     state=NewKaraoke.password)
-    # dispatcher.register_message_handler(state_karaoke_password_is_invalid,
-    #                                     content_types='any',
-    #                                     state=NewKaraoke.password)
-
     dispatcher.register_message_handler(
         karaoke_avatar_registration,
         content_types=['photo'],
@@ -435,11 +407,15 @@ def register_client_handlers(dispatcher: Dispatcher):
     dispatcher.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
 
     dispatcher.register_message_handler(order_track_command, commands=['order_track'])
-    dispatcher.register_message_handler(add_link,
-                                        Text(startswith=['https://www.youtube.com/watch?v=',
-                                                         'https://youtu.be/',
-                                                         'https://xminus.me/track/']),
-                                        state=OrderTrack.link)
+    dispatcher.register_message_handler(
+        add_link,
+        Text(startswith=[
+            'https://www.youtube.com/watch?v=',
+            'https://youtu.be/',
+            'https://xminus.me/track/'
+        ]),
+        state=OrderTrack.link
+    )
     dispatcher.register_message_handler(state_link_is_invalid, content_types='any', state=OrderTrack.link)
 
     dispatcher.register_message_handler(show_my_orders_command, commands=['show_my_orders'])
