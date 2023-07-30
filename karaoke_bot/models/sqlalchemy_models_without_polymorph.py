@@ -52,7 +52,7 @@ class Visitor(Base):
     __tablename__ = 'visitors'
 
     account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
-    selected_karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'), nullable=True)
+    selected_karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaokes.id'), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
@@ -67,7 +67,7 @@ class Moderator(Base):
     __tablename__ = 'moderators'
 
     account_id: Mapped[int] = mapped_column(ForeignKey('accounts.id'), primary_key=True)
-    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
+    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaokes.id'))
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  nullable=False,
@@ -88,7 +88,7 @@ class Owner(Base):
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
     account: Mapped["Account"] = relationship(back_populates='owner')
-    karaoke: Mapped["Karaoke"] = relationship(back_populates='owner')
+    karaokes: Mapped[List["Karaoke"]] = relationship(back_populates='owner')
 
 
 class Administrator(Base):
@@ -120,7 +120,7 @@ class Session(Base):
     __tablename__ = 'sessions'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaoke.id'))
+    karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaokes.id'))
     timestamp_from: Mapped[DateTime] = mapped_column(DATETIME)
     timestamp_to: Mapped[DateTime] = mapped_column(DATETIME)
 
@@ -129,21 +129,21 @@ class Session(Base):
 
 
 class Karaoke(Base):
-    __tablename__ = 'karaoke'
+    __tablename__ = 'karaokes'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), unique=True)
     is_active: Mapped[bool]
     owner_id: Mapped[int] = mapped_column(ForeignKey('owners.account_id'))
-    avatar_id: Mapped[str] = mapped_column(String(150))
-    description: Mapped[str] = mapped_column(String(255))
+    avatar_id: Mapped[str] = mapped_column(String(150), nullable=True)
+    description: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
     visitors: Mapped[List["Visitor"]] = relationship(back_populates='karaoke')
     moderators: Mapped[List["Moderator"]] = relationship(back_populates='karaoke')
-    owner: Mapped["Owner"] = relationship(back_populates='karaoke')
+    owner: Mapped["Owner"] = relationship(back_populates='karaokes')
     session: Mapped["Session"] = relationship(back_populates='karaoke')
 
 
