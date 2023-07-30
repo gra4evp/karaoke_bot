@@ -42,19 +42,19 @@ def karaoke_not_exists(karaoke_name: str) -> bool:
 
 def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str) -> None:
     with AlchemySession() as session:
+
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
-            account = telegram_profile.account
-            account.is_owner = True
-            account.owner = Owner(
-                karaoke=Karaoke(
-                    name=name,
-                    is_active=True,
-                    avatar_id=avatar_id,
-                    description=description
-                )
-            )
+            account: Account = telegram_profile.account
+
+            owner = account.owner
+            if owner is None:
+                account.is_owner = True
+                owner = Owner(account=account)
+                session.add(owner)
+
+            owner.karaokes.append(Karaoke(name=name, is_active=True, avatar_id=avatar_id, description=description))
         else:
-            raise ValueError("Telegram profile should have already existed")
+            raise ValueError("TELEGRAM PROFILE SHOULD HAVE ALREADY EXISTED")
         session.commit()
 
