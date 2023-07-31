@@ -58,3 +58,8 @@ def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str
             raise ValueError("TELEGRAM PROFILE SHOULD HAVE ALREADY EXISTED")
         session.commit()
 
+
+def find_karaoke(karaoke_name: str) -> Karaoke | None:
+    with AlchemySession() as session:
+        karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
+    return karaoke

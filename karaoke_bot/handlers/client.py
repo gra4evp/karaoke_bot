@@ -9,7 +9,8 @@ from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke
+    create_karaoke, find_karaoke
+from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 
 
 async def new_karaoke_command(message: types.Message, state: FSMContext):
@@ -47,7 +48,7 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
         await message.reply("🔒 Sorry, this <b>NAME</b> is already taken.", parse_mode='HTML')
 
 
-async def state_karaoke_name_is_invalid(message: types.Message):
+async def karaoke_name_is_invalid(message: types.Message):
     await message.reply(
         "The <b>NAME</b> must be presented in text and contain't any punctuation marks, "
         "except for: <b>\"$*&_@\"</b>\n\n"
@@ -75,7 +76,7 @@ async def karaoke_avatar_registration(message: types.Message, state: FSMContext)
         await message.answer('✅ Success! 🖼 <b>AVATAR</b> updated.', reply_markup=keyboard, parse_mode='HTML')
 
 
-async def state_karaoke_avatar_is_invalid(message: types.Message):
+async def karaoke_avatar_is_invalid(message: types.Message):
     await message.reply(
         "It seems you sent something wrong. "
         "Please send a 🖼 <b>PHOTO</b> to the avatar for your karaoke.\n\n"
@@ -97,7 +98,7 @@ async def karaoke_description_registration(message: types.Message, state: FSMCon
         await message.answer('✅ Success! 🗓 <b>DESCRIPTION</b> updated.', reply_markup=keyboard, parse_mode='HTML')
 
 
-async def state_karaoke_description_is_invalid(message: types.Message) -> None:
+async def karaoke_description_is_invalid(message: types.Message) -> None:
     await message.reply(
         "The maximum length of the 🗓 <b>DESCRIPTION</b> should not exceed 500 characters",
         parse_mode='HTML'
@@ -241,7 +242,7 @@ async def register_owner(state: FSMContext):
 
 
 async def search_karaoke_command(message: types.Message):
-    await message.answer(f"Enter the <b>name</b> of the virtual karaoke where you plan to perform.", parse_mode='HTML')
+    await message.answer(f"Enter the <b>NAME</b> of the virtual karaoke where you plan to perform.", parse_mode='HTML')
     await KaraokeSearch.name.set()
 
 
@@ -250,35 +251,40 @@ async def callback_search_karaoke_command(callback: types.CallbackQuery):
     await search_karaoke_command(callback.message)
 
 
-async def find_karaoke(message: types.Message, state: FSMContext):
+async def search_karaoke(message: types.Message, state: FSMContext):
+    with AlchemySession() as session:
+        karaoke = session.query(Karaoke).filter_by(name=message.text).first()
 
-    karaoke_name = message.text
-    user_id = message.from_user.id
+        if karaoke is not None:  # если есть такое караоке
+            avatar_id = karaoke.avatar_id
+            description = karaoke.description
+            owner_username = karaoke.owner.account.telegram_profile.username
 
-    query = sqlite_db.sql_find_karaoke_record(karaoke_name)
-    if query is not None:  # если есть такое караоке
-        avatar_id, owner_username = query
+            caption = f"<b>Karaoke</b>: {karaoke.name}\n<b>Owner</b>: @{owner_username}\n"
 
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
-        caption = f"<b>Karaoke</b>: {karaoke_name}\n<b>Owner</b>: @{owner_username}"
+            if description is not None:
+                caption += description
 
-        user_info = sqlite_db.sql_find_user_record(message.from_user.id)
-        if user_info is not None:  # если есть такой пользователь
-
-            active_karaoke, karaoke_list = user_info
-            if karaoke_name in karaoke_list.split('; '):  # если пользователь уже подписан
-                keyboard = None
-                caption += "\n\n✅ You have already subscribed!"
-
-        await bot.send_photo(user_id, avatar_id, caption=caption, reply_markup=keyboard, parse_mode='HTML')
-        await state.finish()
-    else:
-        await message.reply(
-            "Oops, there is no such karaoke yet.\n\n"
-            "Try to get the <b>name</b> from the administrator of the institution where you are.",
-            parse_mode='HTML'
-        )
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke.name}"))
+            #  caption += "\n\n✅ You have already subscribed!"  ДОбавить проверку если пользователь уже подписан
+            if avatar_id is not None:
+                await bot.send_photo(
+                    chat_id=message.from_user.id,
+                    photo=avatar_id,
+                    caption=caption,
+                    reply_markup=keyboard,
+                    parse_mode='HTML'
+                )
+            else:
+                await message.answer(caption, reply_markup=keyboard, parse_mode='HTML')
+            await state.finish()
+        else:
+            await message.reply(
+                "Oops, there is no such karaoke yet.\n\n"
+                "Try to get the <b>NAME</b> from the administrator of the institution where you are.",
+                parse_mode='HTML'
+            )
 
 
 async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
@@ -341,7 +347,7 @@ async def add_link(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-async def state_link_is_invalid(message: types.Message):
+async def link_is_invalid(message: types.Message):
     await message.reply(
         "It seems you sent something wrong."
         "Please send a <b>link</b> to the track on YouTube\n\n"
@@ -392,7 +398,7 @@ def register_client_handlers(dispatcher: Dispatcher):
         state=[NewKaraoke.avatar, NewKaraoke.edit_avatar]
     )
     dispatcher.register_message_handler(
-        state_karaoke_avatar_is_invalid,
+        karaoke_avatar_is_invalid,
         content_types='any',
         state=[NewKaraoke.avatar, NewKaraoke.edit_avatar]
     )
@@ -403,7 +409,7 @@ def register_client_handlers(dispatcher: Dispatcher):
         state=[NewKaraoke.description, NewKaraoke.edit_description]
     )
     dispatcher.register_message_handler(
-        state_karaoke_description_is_invalid,
+        karaoke_description_is_invalid,
         content_types='any',
         state=[NewKaraoke.description, NewKaraoke.edit_description]
     )
@@ -413,12 +419,14 @@ def register_client_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
     dispatcher.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'))
 
-    dispatcher.register_message_handler(find_karaoke, state=KaraokeSearch.name)
-    dispatcher.register_message_handler(state_karaoke_name_is_invalid, content_types='any',
-                                        state=[KaraokeSearch.name, NewKaraoke.name])
+    dispatcher.register_message_handler(search_karaoke, state=KaraokeSearch.name)
+    dispatcher.register_message_handler(
+        karaoke_name_is_invalid,
+        content_types='any',
+        state=[KaraokeSearch.name, NewKaraoke.name]
+    )
 
     dispatcher.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
-
     dispatcher.register_message_handler(order_track_command, commands=['order_track'])
     dispatcher.register_message_handler(
         add_link,
@@ -429,7 +437,7 @@ def register_client_handlers(dispatcher: Dispatcher):
         ]),
         state=OrderTrack.link
     )
-    dispatcher.register_message_handler(state_link_is_invalid, content_types='any', state=OrderTrack.link)
+    dispatcher.register_message_handler(link_is_invalid, content_types='any', state=OrderTrack.link)
 
     dispatcher.register_message_handler(show_my_orders_command, commands=['show_my_orders'])
 
