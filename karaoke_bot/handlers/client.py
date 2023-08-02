@@ -134,11 +134,10 @@ async def new_karaoke_command_confirm(
 
 async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    button_options = {}  # сделать словарь с кнопками позже
+    # button_options = {}  # сделать словарь с кнопками позже
 
     keyboard = InlineKeyboardMarkup()
     callback_data = callback.data.split(' ')[1:]
-    print(callback_data)
     match callback_data:
         case ('create',):
             keyboard.add(
@@ -292,8 +291,7 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
     karaoke_name = callback.data.split(' ')[-1]
     user_id = callback.from_user.id
 
-    # удаление inline кнопки после нажатия
-    await bot.edit_message_reply_markup(chat_id=user_id, message_id=callback.message.message_id)
+    await callback.message.edit_reply_markup()  # delete markup
 
     query = sqlite_db.sql_find_user_record(user_id)
     if query is None:
