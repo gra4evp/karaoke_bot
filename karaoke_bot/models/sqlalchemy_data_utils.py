@@ -1,4 +1,5 @@
-from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner
+from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner, Visitor
+from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
 from aiogram import types
 
 
@@ -53,10 +54,34 @@ def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str
                 owner = Owner(account=account)
                 session.add(owner)
 
-            owner.karaokes.append(Karaoke(name=name, is_active=True, avatar_id=avatar_id, description=description))
+            owner.karaokes.add(Karaoke(name=name, is_active=True, avatar_id=avatar_id, description=description))
+            session.commit()
         else:
             raise ValueError("TELEGRAM PROFILE SHOULD HAVE ALREADY EXISTED")
-        session.commit()
+
+
+def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+
+            visitor = account.visitor
+            if visitor is None:
+                account.is_visitor = True
+                visitor = Visitor(account=account)
+                session.add(visitor)
+
+            karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
+            if karaoke is not None:
+                print(visitor.karaokes)
+                visitor.karaokes.add(karaoke)
+                session.commit()
+            else:
+                session.commit()
+                raise KaraokeNotFoundError(karaoke_name)
+        else:
+            raise TelegramProfileNotFoundError(telegram_id)
 
 
 def find_karaoke(karaoke_name: str) -> Karaoke | None:
