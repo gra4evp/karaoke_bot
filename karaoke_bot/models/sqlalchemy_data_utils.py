@@ -74,7 +74,6 @@ def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
 
             karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
             if karaoke is not None:
-                print(visitor.karaokes)
                 visitor.karaokes.add(karaoke)
                 session.commit()
             else:
