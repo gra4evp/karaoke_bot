@@ -9,7 +9,8 @@ from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke, find_karaoke
+    create_karaoke, find_karaoke, subscribe_to_karaoke
+from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 
 
@@ -213,7 +214,7 @@ async def register_owner(state: FSMContext):
     try:
         create_karaoke(telegram_id=owner.id, name=karaoke_name, avatar_id=avatar_id, description=description)
     except ValueError as e:
-        print(f"Error occurred: {e}")
+        print(f"ERROR OCCURRED: {e}")
         try:
             create_or_update_telegram_profile(user=owner)
             create_karaoke(telegram_id=owner.id, name=karaoke_name, avatar_id=avatar_id, description=description)
@@ -222,10 +223,10 @@ async def register_owner(state: FSMContext):
                 text="✅ Success! You have created your <b>virtual karaoke</b>!",
                 parse_mode='HTML'
             )
-        except Exception as e:
+        except Exception:
             raise  # Пробрасываем исключение выше
     except Exception as e:
-        print(f"Error occurred: {e}")
+        print(f"ERROR OCCURRED: {e}")
         await bot.send_message(
             chat_id=owner.id,
             text="Oops, something went wrong, we are already working on the error"
@@ -292,20 +293,39 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
     user_id = callback.from_user.id
 
     await callback.message.edit_reply_markup()  # delete markup
-
-    query = sqlite_db.sql_find_user_record(user_id)
-    if query is None:
-        # Если нет записи о пользователе (нет ни одного караоке в котором он состоит)
-        await sqlite_db.sql_add_user_record(user_id, active_karaoke=karaoke_name, karaoke_name=karaoke_name)
+    try:
+        subscribe_to_karaoke(telegram_id=user_id, karaoke_name=karaoke_name)
+    except TelegramProfileNotFoundError as e:
+        print(f"ERROR OCCURRED: {e}")
+        try:
+            create_or_update_telegram_profile(user=callback.from_user)
+            subscribe_to_karaoke(telegram_id=user_id, karaoke_name=karaoke_name)
+        except Exception:
+            raise
+    except KaraokeNotFoundError as e:
+        print(f"ERROR OCCURRED: {e.args}")
+        await callback.answer(text=e.args[0])
     else:
-        # Если пользователь уже был в базе, то нужно распарсить список его караоке в которых он учавствует
-        karaoke_list = query[1].split('; ')
-        karaoke_list.append(karaoke_name)
-        await sqlite_db.sql_update_user_record(user_id, active_karaoke=karaoke_name, karaoke_list=karaoke_list)
+        await callback.answer("✅ Success! You have subscribed!")
 
-    await callback.answer(f'✅ You have joined "{karaoke_name}" karaoke.\n'
-                          f'Now you can order tracks in it.',
-                          show_alert=True)
+
+
+
+    # query = sqlite_db.sql_find_user_record(user_id)
+    # if query is not None:
+    #     # Если нет записи о пользователе (нет ни одного караоке в котором он состоит)
+    #     await sqlite_db.sql_add_user_record(user_id, active_karaoke=karaoke_name, karaoke_name=karaoke_name)
+    # else:
+    #     # Если пользователь уже был в базе, то нужно распарсить список его караоке в которых он учавствует
+    #     karaoke_list = query[1].split('; ')
+    #     karaoke_list.append(karaoke_name)
+    #     await sqlite_db.sql_update_user_record(user_id, active_karaoke=karaoke_name, karaoke_list=karaoke_list)
+
+    await callback.answer(
+        f'✅ You have joined "{karaoke_name}" karaoke.\n'
+        f'Now you can order tracks in it.',
+        show_alert=True
+    )
 
 
 async def order_track_command(message: types.Message, state: FSMContext):
