@@ -65,7 +65,7 @@ class Visitor(Base):
 
     account: Mapped["Account"] = relationship(back_populates='visitor')
     selected_karaoke: Mapped["Karaoke"] = relationship()
-    karaokes: Mapped[Set["Karaoke"]] = relationship(back_populates='subscribers')
+    karaokes: Mapped[Set["Karaoke"]] = relationship(secondary=visitors_karaokes, back_populates='subscribers')
     performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='visitor')
 
 
