@@ -1,10 +1,7 @@
-from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property
-from sqlalchemy.orm import relationship
-from datetime import datetime
+from typing import Set, List
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from typing import List
+from sqlalchemy import Table, Column, Integer, String, DateTime, ForeignKey, TIMESTAMP, func, DATETIME
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base, column_property, sessionmaker
 
 Base = declarative_base()
 
@@ -48,6 +45,14 @@ class Account(Base):
     administrator: Mapped["Administrator"] = relationship(back_populates='account')
 
 
+visitors_karaokes = Table(
+    'visitors_karaokes',
+    Base.metadata,
+    Column('visitor_id', Integer, ForeignKey('visitors.account_id')),
+    Column('karaoke_id', Integer, ForeignKey('karaokes.id'))
+)
+
+
 class Visitor(Base):
     __tablename__ = 'visitors'
 
@@ -59,7 +64,8 @@ class Visitor(Base):
                                                  onupdate=func.current_timestamp())
 
     account: Mapped["Account"] = relationship(back_populates='visitor')
-    karaoke: Mapped["Karaoke"] = relationship(back_populates='visitors')
+    selected_karaoke: Mapped["Karaoke"] = relationship()
+    karaokes: Mapped[Set["Karaoke"]] = relationship(back_populates='subscribers')
     performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='visitor')
 
 
@@ -88,7 +94,7 @@ class Owner(Base):
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
     account: Mapped["Account"] = relationship(back_populates='owner')
-    karaokes: Mapped[List["Karaoke"]] = relationship(back_populates='owner')
+    karaokes: Mapped[Set["Karaoke"]] = relationship(back_populates='owner')
 
 
 class Administrator(Base):
@@ -141,8 +147,10 @@ class Karaoke(Base):
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    visitors: Mapped[List["Visitor"]] = relationship(back_populates='karaoke')
-    moderators: Mapped[List["Moderator"]] = relationship(back_populates='karaoke')
+
+    subscribers: Mapped[Set["Visitor"]] = relationship(secondary=visitors_karaokes, back_populates='karaokes')
+
+    moderators: Mapped[Set["Moderator"]] = relationship(back_populates='karaoke')
     owner: Mapped["Owner"] = relationship(back_populates='karaokes')
     session: Mapped["Session"] = relationship(back_populates='karaoke')
 
@@ -178,8 +186,8 @@ class Track(Base):
     updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
                                                  server_default=func.current_timestamp(),
                                                  onupdate=func.current_timestamp())
-    versions: Mapped[List["TrackVersion"]] = relationship(back_populates='track')
-    artists: Mapped[List["Artist"]] = relationship(secondary=tracks_artists, back_populates="tracks")
+    versions: Mapped[Set["TrackVersion"]] = relationship(back_populates='track')
+    artists: Mapped[Set["Artist"]] = relationship(secondary=tracks_artists, back_populates="tracks")
 
 
 class Artist(Base):
@@ -187,7 +195,7 @@ class Artist(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(64))
-    tracks: Mapped[List["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
+    tracks: Mapped[Set["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
 
 
 # engine = create_engine('mysql+pymysql://karaoke_bot:karaoke_bot@localhost/karaoke_db', echo=True)
