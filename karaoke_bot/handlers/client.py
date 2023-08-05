@@ -9,7 +9,7 @@ from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke, find_karaoke, subscribe_to_karaoke
+    create_karaoke, find_karaoke, subscribe_to_karaoke, has_active_karaoke
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 
@@ -213,7 +213,7 @@ async def register_owner(state: FSMContext):
 
     try:
         create_karaoke(telegram_id=owner.id, name=karaoke_name, avatar_id=avatar_id, description=description)
-    except ValueError as e:
+    except TelegramProfileNotFoundError as e:
         print(f"ERROR OCCURRED: {e}")
         try:
             create_or_update_telegram_profile(user=owner)
@@ -267,7 +267,12 @@ async def search_karaoke(message: types.Message, state: FSMContext):
 
             keyboard = InlineKeyboardMarkup()
             keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke.name}"))
-            #  caption += "\n\n✅ You have already subscribed!"  ДОбавить проверку если пользователь уже подписан
+
+            for visitor in karaoke.subscribers:
+                if message.from_user.id == visitor.account.telegram_profile.id:
+                    keyboard = None
+                    caption += "\n\n✅ You have already subscribed!"
+
             if avatar_id is not None:
                 await bot.send_photo(
                     chat_id=message.from_user.id,
@@ -306,43 +311,15 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
         print(f"ERROR OCCURRED: {e.args}")
         await callback.answer(text=e.args[0])
     else:
-        await callback.answer("✅ Success! You have subscribed!")
+        await callback.message.answer("✅ Success! You have subscribed!")
+        await order_track_command(message=callback.message)
 
 
+async def order_track_command(message: types.Message):
 
-
-    # query = sqlite_db.sql_find_user_record(user_id)
-    # if query is not None:
-    #     # Если нет записи о пользователе (нет ни одного караоке в котором он состоит)
-    #     await sqlite_db.sql_add_user_record(user_id, active_karaoke=karaoke_name, karaoke_name=karaoke_name)
-    # else:
-    #     # Если пользователь уже был в базе, то нужно распарсить список его караоке в которых он учавствует
-    #     karaoke_list = query[1].split('; ')
-    #     karaoke_list.append(karaoke_name)
-    #     await sqlite_db.sql_update_user_record(user_id, active_karaoke=karaoke_name, karaoke_list=karaoke_list)
-
-    await callback.answer(
-        f'✅ You have joined "{karaoke_name}" karaoke.\n'
-        f'Now you can order tracks in it.',
-        show_alert=True
-    )
-
-
-async def order_track_command(message: types.Message, state: FSMContext):
-    # Если нет записи о пользователе, то перехходим в хендлер_callback для команды /search_karaoke или /cancel
-    query = sqlite_db.sql_find_user_record(message.from_user.id)
-    if query is not None:
-
-        active_karaoke, karaoke_list = query
-        owner_id = sqlite_db.sql_find_owner_id(karaoke_name=active_karaoke)
-
-        async with state.proxy() as data:
-            data['active_karaoke'] = active_karaoke
-            data['owner_id'] = owner_id
-
+    if has_active_karaoke(telegram_id=message.from_user.id):
         await message.answer("Send a <b>link</b> to the track on YouTube", parse_mode='HTML')
         await OrderTrack.link.set()
-
     else:
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
