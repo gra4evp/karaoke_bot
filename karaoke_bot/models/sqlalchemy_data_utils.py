@@ -57,7 +57,7 @@ def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str
             owner.karaokes.add(Karaoke(name=name, is_active=True, avatar_id=avatar_id, description=description))
             session.commit()
         else:
-            raise ValueError("TELEGRAM PROFILE SHOULD HAVE ALREADY EXISTED")
+            raise TelegramProfileNotFoundError(telegram_id)
 
 
 def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
@@ -74,6 +74,7 @@ def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
 
             karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
             if karaoke is not None:
+                visitor.selected_karaoke = karaoke
                 visitor.karaokes.add(karaoke)
                 session.commit()
             else:
@@ -87,3 +88,17 @@ def find_karaoke(karaoke_name: str) -> Karaoke | None:
     with AlchemySession() as session:
         karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
     return karaoke
+
+
+def has_active_karaoke(telegram_id: int) -> bool:
+    flag = False
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            visitor = telegram_profile.account.visitor
+            if visitor is not None:
+                selected_karaoke = visitor.selected_karaoke
+                print(selected_karaoke)
+                if selected_karaoke is not None:
+                    flag = True
+    return flag
