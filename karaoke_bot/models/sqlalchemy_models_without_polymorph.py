@@ -34,15 +34,31 @@ class Account(Base):
     is_moderator: Mapped[bool] = mapped_column(nullable=True)
     is_administrator: Mapped[bool] = mapped_column(nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True), nullable=False,
-                                                 server_default=func.current_timestamp(),
-                                                 onupdate=func.current_timestamp())
+    updated_at: Mapped[DateTime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
 
     telegram_profile: Mapped["TelegramProfile"] = relationship(back_populates='account')
     visitor: Mapped["Visitor"] = relationship(back_populates='account')
     owner: Mapped["Owner"] = relationship(back_populates='account')
     moderator: Mapped["Moderator"] = relationship(back_populates='account')
     administrator: Mapped["Administrator"] = relationship(back_populates='account')
+
+    def __repr__(self):
+        return (
+            f"<Account(\n"
+            f"  id={self.id},\n"
+            f"  is_visitor={self.is_visitor},\n"
+            f"  is_owner={self.is_owner},\n"
+            f"  is_moderator={self.is_moderator},\n"
+            f"  is_administrator={self.is_administrator},\n"
+            f"  created_at={self.created_at},\n"
+            f"  updated_at={self.updated_at}\n"
+            f")>"
+        )
 
 
 visitors_karaokes = Table(
@@ -67,6 +83,16 @@ class Visitor(Base):
     selected_karaoke: Mapped["Karaoke"] = relationship()
     karaokes: Mapped[Set["Karaoke"]] = relationship(secondary=visitors_karaokes, back_populates='subscribers')
     performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='visitor')
+
+    def __repr__(self):
+        return (
+            f"<Visitor(\n"
+            f"  account_id={self.account_id},\n"
+            f"  selected_karaoke_id={self.selected_karaoke_id},\n"
+            f"  created_at={self.created_at},\n"
+            f"  updated_at={self.updated_at}\n"
+            f")>"
+        )
 
 
 class Moderator(Base):
