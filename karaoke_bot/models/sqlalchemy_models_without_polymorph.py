@@ -153,8 +153,8 @@ class Session(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     karaoke_id: Mapped[int] = mapped_column(ForeignKey('karaokes.id'))
-    timestamp_from: Mapped[DateTime] = mapped_column(DATETIME)
-    timestamp_to: Mapped[DateTime] = mapped_column(DATETIME)
+    timestamp_from: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
+    timestamp_to: Mapped[DateTime] = mapped_column(DATETIME, nullable=True)
 
     performance: Mapped["VisitorPerformance"] = relationship(back_populates='session')
     karaoke: Mapped["Karaoke"] = relationship(back_populates='session')
