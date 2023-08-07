@@ -1,6 +1,7 @@
 from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner, Visitor,\
     VisitorPerformance, Session
-from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
+from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, InvalidAccountStateError,\
+    EmptyFieldError
 from aiogram import types
 
 
@@ -101,17 +102,22 @@ def find_karaoke(karaoke_name: str) -> Karaoke | None:
     return karaoke
 
 
-def has_active_karaoke(telegram_id: int) -> bool:
-    flag = False
+def get_selected_karaoke_name(telegram_id: int) -> tuple:
     with AlchemySession() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
-            visitor = telegram_profile.account.visitor
+            account: Account = telegram_profile.account
+            visitor: Visitor = account.visitor
             if visitor is not None:
-                selected_karaoke = visitor.selected_karaoke
+                selected_karaoke: Karaoke = visitor.selected_karaoke
                 if selected_karaoke is not None:
-                    flag = True
-    return flag
+                    return selected_karaoke.name, selected_karaoke.owner.account_id
+
+                raise EmptyFieldError('Visitor', 'selected_karaoke')
+
+            raise InvalidAccountStateError(account_id=account.id, state='visitor')
+
+        raise TelegramProfileNotFoundError(telegram_id=telegram_id)
 
 
 def add_track_to_visitor_performance(telegram_id: int, url: str):
