@@ -9,13 +9,16 @@ from karaoke_bot.config import START_TEXT
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 
 
-async def start_command(message: types.Message):
-    await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
-
+async def register_telegram_user(message: types.Message, state: FSMContext | None = None):
     try:
         create_or_update_telegram_profile(user=message.from_user)
     except Exception as e:
         print(f"Error occurred: {e}")
+
+
+async def start_command(message: types.Message):
+    await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
+    await register_telegram_user(message)
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
