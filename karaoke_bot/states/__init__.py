@@ -1,1 +1,1 @@
-from .client_states import FSMKaraokeSearch, FSMNewKaraoke, FSMOrderTrack
+from .client_states import KaraokeSearch, NewKaraoke, OrderTrack

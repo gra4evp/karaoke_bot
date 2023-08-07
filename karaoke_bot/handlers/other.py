@@ -5,10 +5,17 @@ from karaoke_bot.keyboards import other_keyboard
 from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from karaoke_bot.config import START_TEXT
+# from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
+from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 
 
 async def start_command(message: types.Message):
     await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
+
+    try:
+        create_or_update_telegram_profile(user=message.from_user)
+    except Exception as e:
+        print(f"Error occurred: {e}")
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
@@ -128,7 +135,7 @@ async def callback_change_to(callback: types.CallbackQuery):
     await callback.message.edit_text('\n'.join(rows), reply_markup=keyboard, parse_mode='HTML')
 
 
-def register_handlers_other(dispatcher: Dispatcher):
+def register_other_handlers(dispatcher: Dispatcher):
 
     dispatcher.register_callback_query_handler(callback_cancel_command, Text(equals='cancel'))
     dispatcher.register_message_handler(cancel_command, Text(equals='cancel', ignore_case=True), state='*')

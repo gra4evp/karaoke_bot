@@ -2,3 +2,4 @@
 /karaoke_bot/utils/tracks_cache/
 /venv/
 /karaoke_bot/karaoke
+/.pytest_cache
