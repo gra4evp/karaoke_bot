@@ -1,4 +1,5 @@
-from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner, Visitor
+from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner, Visitor,\
+    VisitorPerformance, Session
 from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
 from aiogram import types
 
@@ -39,6 +40,16 @@ def karaoke_not_exists(karaoke_name: str) -> bool:
     with AlchemySession() as session:
         karaoke = session.query(Karaoke).filter_by(name=karaoke_name).scalar()
     return karaoke is None
+
+
+def create_karaoke_session(karaoke_name: str) -> None:
+    with AlchemySession() as session:
+        karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
+        if karaoke is not None:
+            karaoke.session = Session()
+            session.commit()
+        else:
+            raise KaraokeNotFoundError(karaoke_name=karaoke_name)
 
 
 def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str) -> None:
@@ -98,7 +109,18 @@ def has_active_karaoke(telegram_id: int) -> bool:
             visitor = telegram_profile.account.visitor
             if visitor is not None:
                 selected_karaoke = visitor.selected_karaoke
-                print(selected_karaoke)
                 if selected_karaoke is not None:
                     flag = True
     return flag
+
+
+def add_track_to_visitor_performance(telegram_id: int, url: str):
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            visitor = telegram_profile.account.visitor
+            if visitor is not None:
+                # visitor.performances.append(VisitorPerformance())
+                pass
+        else:
+            raise TelegramProfileNotFoundError(telegram_id)
