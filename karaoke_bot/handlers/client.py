@@ -7,10 +7,12 @@ from data_base import sqlite_db
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from string import ascii_letters, digits
+from .other import register_telegram_user
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke, find_karaoke, subscribe_to_karaoke, has_active_karaoke, create_karaoke_session
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError
+    create_karaoke, find_karaoke, subscribe_to_karaoke, get_selected_karaoke_name, create_karaoke_session
+from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
+    EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 
 
@@ -287,7 +289,7 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             )
 
 
-async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
+async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FSMContext):
 
     karaoke_name = callback.data.split(' ')[-1]
     user_id = callback.from_user.id
@@ -304,34 +306,50 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery):
             raise
     except KaraokeNotFoundError as e:
         print(f"ERROR OCCURRED: {e.args}")
-        await callback.answer(text=e.args[0])
+        await callback.message.answer(text=e.args[0])
     else:
         await callback.message.answer("✅ Success! You have subscribed!")
-        await order_track_command(message=callback.message, user_id=callback.from_user.id)
+        await order_track_command(callback.message, state, callback.from_user.id)
 
 
-async def order_track_command(message: types.Message, user_id=None):
+async def order_track_command(message: types.Message, state: FSMContext, user_id=None):
     if user_id is None:
         user_id = message.from_user.id
 
-    if has_active_karaoke(telegram_id=user_id):
-        await bot.send_message(chat_id=user_id, text="Please send a link to the track", parse_mode='HTML')
-        await OrderTrack.link.set()
-    else:
+    try:
+        karaoke_name, owner_id = get_selected_karaoke_name(telegram_id=user_id)
+    except (EmptyFieldError, InvalidAccountStateError) as e:
+        print(f"ERROR OCCURRED: {e}")
+
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
         keyboard.insert(InlineKeyboardButton(text="❌ No", callback_data='cancel'))
         await bot.send_message(
             chat_id=user_id,
-            text="You don't have an active karaoke yet where you could order music.\n\nGo to karaoke search?",
+            text="You have not chosen any karaoke where you can order music.\n\nGo to karaoke search?",
             reply_markup=keyboard,
             parse_mode='HTML'
         )
+    except TelegramProfileNotFoundError as e:
+        print(f"ERROR OCCURRED: {e}")
+        await register_telegram_user(message=message)
+        await order_track_command(message, state, user_id)
+    except Exception as e:
+        print(f"ERROR OCCURRED: {e}")
+    else:
+        await OrderTrack.link.set()
+        async with state.proxy() as data:
+            data['karaoke_name'] = karaoke_name
+            data['owner_id'] = owner_id
+        await bot.send_message(chat_id=user_id, text="Please send a link to the track", parse_mode='HTML')
 
 
 async def add_link(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        karaoke_name = data.get('karaoke_name')
+        owner_id = data.get('owner_id')
 
-    # add_track_to_queue(user=message.from_user, karaoke_name=active_karaoke, owner_id=owner_id, track_url=message.text)
+    add_track_to_queue(user=message.from_user, karaoke_name=karaoke_name, owner_id=owner_id, track_url=message.text)
 
     # Записываем в базу кто поставил какой трек.
     # await sqlite_db.sql_add_track_record(user_id=message.from_user.id, active_karaoke=active_karaoke, link=message.text)
