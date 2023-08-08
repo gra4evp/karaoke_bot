@@ -10,7 +10,8 @@ from string import ascii_letters, digits
 from .other import register_telegram_user
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke, find_karaoke, subscribe_to_karaoke, get_selected_karaoke_name, create_karaoke_session
+    create_karaoke, find_karaoke, subscribe_to_karaoke, get_selected_karaoke_data, create_karaoke_session,\
+    add_performance_to_visitor
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
@@ -317,7 +318,7 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         user_id = message.from_user.id
 
     try:
-        karaoke_name, owner_id = get_selected_karaoke_name(telegram_id=user_id)
+        karaoke_name, owner_id = get_selected_karaoke_data(telegram_id=user_id)
     except (EmptyFieldError, InvalidAccountStateError) as e:
         print(f"ERROR OCCURRED: {e}")
 
@@ -341,7 +342,11 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
             data['owner_id'] = owner_id
-        await bot.send_message(chat_id=user_id, text="Please send a link to the track", parse_mode='HTML')
+        await bot.send_message(
+            chat_id=user_id,
+            text="Please send a link to the track on YouTube or XMinus",
+            parse_mode='HTML'
+        )
 
 
 async def add_link(message: types.Message, state: FSMContext):
@@ -349,12 +354,19 @@ async def add_link(message: types.Message, state: FSMContext):
         karaoke_name = data.get('karaoke_name')
         owner_id = data.get('owner_id')
 
-    add_track_to_queue(user=message.from_user, karaoke_name=karaoke_name, owner_id=owner_id, track_url=message.text)
-
-    # Записываем в базу кто поставил какой трек.
-    # await sqlite_db.sql_add_track_record(user_id=message.from_user.id, active_karaoke=active_karaoke, link=message.text)
-    await message.answer("✅ Your track has been added to the queue!")
-    await state.finish()
+    try:
+        add_performance_to_visitor(telegram_id=message.from_user.id, track_url=message.text)
+    except (EmptyFieldError, InvalidAccountStateError) as e:
+        print(f"ERROR OCCURRED: {e}")
+    except TelegramProfileNotFoundError as e:
+        print(f"ERROR OCCURRED: {e}")
+    except Exception as e:
+        print(f"ERROR OCCURRED: {e}")
+    else:
+        add_track_to_queue(user=message.from_user, karaoke_name=karaoke_name, owner_id=owner_id, track_url=message.text)
+        await message.answer("✅ Your track has been added to the queue!")
+    finally:
+        await state.finish()
 
 
 async def link_is_invalid(message: types.Message):
