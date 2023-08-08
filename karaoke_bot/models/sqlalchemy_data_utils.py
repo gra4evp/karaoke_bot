@@ -1,5 +1,5 @@
 from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Account, AlchemySession, Owner, Visitor,\
-    VisitorPerformance, Session
+    VisitorPerformance, Session, TrackVersion
 from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, InvalidAccountStateError,\
     EmptyFieldError
 from aiogram import types
@@ -102,7 +102,7 @@ def find_karaoke(karaoke_name: str) -> Karaoke | None:
     return karaoke
 
 
-def get_selected_karaoke_name(telegram_id: int) -> tuple:
+def get_selected_karaoke_data(telegram_id: int) -> tuple:
     with AlchemySession() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
@@ -120,13 +120,27 @@ def get_selected_karaoke_name(telegram_id: int) -> tuple:
         raise TelegramProfileNotFoundError(telegram_id=telegram_id)
 
 
-def add_track_to_visitor_performance(telegram_id: int, url: str):
+def add_performance_to_visitor(telegram_id: int, track_url: str):
     with AlchemySession() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
         if telegram_profile is not None:
-            visitor = telegram_profile.account.visitor
+            account: Account = telegram_profile.account
+            visitor: Visitor = account.visitor
             if visitor is not None:
-                # visitor.performances.append(VisitorPerformance())
-                pass
+                selected_karaoke: Karaoke = visitor.selected_karaoke
+                if selected_karaoke is not None:
+                    print(selected_karaoke.session.id)
+                    session.add(
+                        VisitorPerformance(
+                            visitor_id=visitor.account_id,
+                            track_version=TrackVersion(url=track_url),
+                            session_id=selected_karaoke.session.id
+                        )
+                    )
+                    session.commit()
+                else:
+                    raise EmptyFieldError('Visitor', 'selected_karaoke')
+            else:
+                raise InvalidAccountStateError(account_id=account.id, state='visitor')
         else:
             raise TelegramProfileNotFoundError(telegram_id)
