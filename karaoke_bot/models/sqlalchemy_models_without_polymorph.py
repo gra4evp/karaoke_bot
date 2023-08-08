@@ -138,7 +138,7 @@ class Administrator(Base):
 class VisitorPerformance(Base):
     __tablename__ = 'visitor_performances'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     visitor_id: Mapped[int] = mapped_column(ForeignKey('visitors.account_id'))
     track_version_id: Mapped[int] = mapped_column(ForeignKey('track_versions.id'))
     session_id: Mapped[int] = mapped_column(ForeignKey('sessions.id'))
@@ -170,9 +170,11 @@ class Karaoke(Base):
     avatar_id: Mapped[str] = mapped_column(String(150), nullable=True)
     description: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
-                                                 server_default=func.current_timestamp(),
-                                                 onupdate=func.current_timestamp())
+    updated_at: Mapped[DateTime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
 
     subscribers: Mapped[Set["Visitor"]] = relationship(secondary=visitors_karaokes, back_populates='karaokes')
 
@@ -184,13 +186,15 @@ class Karaoke(Base):
 class TrackVersion(Base):
     __tablename__ = 'track_versions'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    track_id: Mapped[int] = mapped_column(ForeignKey('tracks.id'))
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    track_id: Mapped[int] = mapped_column(ForeignKey('tracks.id'), nullable=True)
     url: Mapped[str] = mapped_column(String(2048), index=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
-                                                 server_default=func.current_timestamp(),
-                                                 onupdate=func.current_timestamp())
+    updated_at: Mapped[DateTime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
     performances: Mapped[List["VisitorPerformance"]] = relationship(back_populates='track_version')
     track: Mapped["Track"] = relationship(back_populates='versions')
 
@@ -219,7 +223,7 @@ class Track(Base):
 class Artist(Base):
     __tablename__ = 'artist'
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(64))
     tracks: Mapped[Set["Track"]] = relationship(secondary=tracks_artists, back_populates="artists")
 
