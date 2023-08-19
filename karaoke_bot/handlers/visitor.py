@@ -110,7 +110,7 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         )
     except TelegramProfileNotFoundError as e:
         print(f"ERROR OCCURRED: {e}")
-        await register_telegram_user(message=message)
+        await register_telegram_user(message.from_user)
         await order_track_command(message, state, user_id)
     except Exception as e:
         print(f"ERROR OCCURRED: {e}")

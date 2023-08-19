@@ -5,6 +5,7 @@ from karaoke_bot.states.client_states import NewKaraoke, KaraokeSearch
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
+from .other import register_telegram_user
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
     create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
@@ -215,14 +216,8 @@ async def register_karaoke(state: FSMContext):
         create_karaoke_session(karaoke_name=karaoke_name)
     except TelegramProfileNotFoundError as e:
         print(f"ERROR OCCURRED: {e}")
-        try:
-            create_or_update_telegram_profile(user=owner)
-            create_karaoke(telegram_id=owner.id, name=karaoke_name, avatar_id=avatar_id, description=description)
-            create_karaoke_session(karaoke_name=karaoke_name)
-            await bot.send_message(chat_id=owner.id, text=success_text, parse_mode='HTML')
-        except Exception:
-            raise  # Raising the exception above
-
+        await register_telegram_user(owner)
+        await register_karaoke(state)
     except Exception as e:
         print(f"ERROR OCCURRED: {e}")
         await bot.send_message(chat_id=owner.id, text=fail_text)

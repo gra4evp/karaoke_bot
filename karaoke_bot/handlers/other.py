@@ -9,9 +9,9 @@ from karaoke_bot.config import START_TEXT
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 
 
-async def register_telegram_user(message: types.Message, state: FSMContext | None = None):
+async def register_telegram_user(user: types.User):
     try:
-        create_or_update_telegram_profile(user=message.from_user)
+        create_or_update_telegram_profile(user)
     except Exception as e:
         print(f"Error occurred: {e}")
 
