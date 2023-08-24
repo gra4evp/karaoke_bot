@@ -76,11 +76,8 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         subscribe_to_karaoke(telegram_id=user_id, karaoke_name=karaoke_name)
     except TelegramProfileNotFoundError as e:
         print(f"ERROR OCCURRED: {e}")
-        try:
-            create_or_update_telegram_profile(user=callback.from_user)
-            subscribe_to_karaoke(telegram_id=user_id, karaoke_name=karaoke_name)
-        except Exception:
-            raise
+        await register_telegram_user(callback.from_user)
+        await callback_subscribe_to_karaoke(callback, state)
     except KaraokeNotFoundError as e:
         print(f"ERROR OCCURRED: {e.args}")
         await callback.message.answer(text=e.args[0])

@@ -18,7 +18,7 @@ async def register_telegram_user(user: types.User):
 
 async def start_command(message: types.Message):
     await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
-    await register_telegram_user(message)
+    await register_telegram_user(message.from_user)
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
