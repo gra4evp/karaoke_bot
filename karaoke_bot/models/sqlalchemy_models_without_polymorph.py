@@ -18,9 +18,11 @@ class TelegramProfile(Base):
     language_code: Mapped[str] = mapped_column(String(10))
     is_premium: Mapped[bool] = mapped_column(nullable=True)
     created_at: Mapped[DateTime] = mapped_column(DATETIME, server_default=func.now())
-    updated_at: Mapped[DateTime] = mapped_column(TIMESTAMP(timezone=True),
-                                                 server_default=func.current_timestamp(),
-                                                 onupdate=func.current_timestamp())
+    updated_at: Mapped[DateTime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()
+    )
 
     account: Mapped["Account"] = relationship(back_populates='telegram_profile')
 
