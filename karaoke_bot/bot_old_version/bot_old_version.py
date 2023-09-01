@@ -14,6 +14,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import time
 import csv
+import os
+
+
+print(f"Текущий рабочий каталог: {os.getcwd()}")
 
 
 class FSMOrderTrack(StatesGroup):
