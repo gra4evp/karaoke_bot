@@ -1,5 +1,9 @@
 import json
 import csv
+import os
+
+
+print(f"Текущий рабочий каталог: {os.getcwd()}")
 
 
 def load_links_by_user_id(file_name: str) -> dict:
