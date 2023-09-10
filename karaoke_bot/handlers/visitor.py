@@ -12,6 +12,7 @@ from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_p
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
+from utils import format_subscribers_count
 
 
 async def search_karaoke_command(message: types.Message):
@@ -32,8 +33,11 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             avatar_id = karaoke.avatar_id
             description = karaoke.description
             owner_username = karaoke.owner.account.telegram_profile.username
+            subscribers = karaoke.subscribers
 
-            caption = f"<b>Karaoke</b>: {karaoke.name}\n<b>Owner</b>: @{owner_username}\n"
+            caption = f"<b>Karaoke</b>: {karaoke.name}\n" \
+                      f"<b>Owner</b>: @{owner_username}\n" \
+                      f"<b>Subscribers</b>: {format_subscribers_count(len(subscribers))}\n\n"
 
             if description is not None:
                 caption += description
@@ -41,10 +45,11 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             keyboard = InlineKeyboardMarkup()
             keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke.name}"))
 
-            for visitor in karaoke.subscribers:
+            for visitor in subscribers:
                 if message.from_user.id == visitor.account.telegram_profile.id:
                     keyboard = None
                     caption += "\n\n✅ You have already subscribed!"
+                    break
 
             if avatar_id is not None:
                 await bot.send_photo(
@@ -117,7 +122,8 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
             data['owner_id'] = owner_id
         await bot.send_message(
             chat_id=user_id,
-            text="Please send a link to the track on YouTube or XMinus",
+            text=f"Please send a link to the track on YouTube or XMinus\n\n"
+                 f"Karaoke: <b>{karaoke_name}</b>",
             parse_mode='HTML'
         )
 
