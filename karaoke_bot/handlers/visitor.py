@@ -8,11 +8,11 @@ from aiogram.utils.markdown import hlink
 from .other import register_telegram_user
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, subscribe_to_karaoke,\
-    get_selected_karaoke_data, add_performance_to_visitor
+    get_selected_karaoke_data, add_performance_to_visitor, get_visitor_karaoke_names
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
-from utils import format_subscribers_count
+from .utils import format_subscribers_count
 
 
 async def search_karaoke_command(message: types.Message):
@@ -120,12 +120,31 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
             data['owner_id'] = owner_id
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(text="Change karaoke", callback_data='change_selected_karaoke'))
         await bot.send_message(
             chat_id=user_id,
-            text=f"Please send a link to the track on YouTube or XMinus\n\n"
-                 f"Karaoke: <b>{karaoke_name}</b>",
+            text=f"Please send a link to the track on YouTube or XMinus\n\n<b>Selected karaoke:</b> {karaoke_name}",
+            reply_markup=keyboard,
             parse_mode='HTML'
         )
+
+
+async def callback_change_selected_karaoke(callback: types.CallbackQuery):
+    await callback.answer()
+
+    keyboard = InlineKeyboardMarkup()
+    # callback_data = callback.data.split(' ')[1:]
+    match callback.data:
+        case "change_selected_karaoke":
+            try:
+                karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
+            except EmptyFieldError as e:
+                print(f"ERROR OCCURRED: {e}")
+            else:
+                # нужно из множества караоке убрать то активное, которое сейчас используется
+                pass
+
 
 
 async def add_link(message: types.Message, state: FSMContext):
@@ -194,6 +213,8 @@ def register_visitor_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
 
     dp.register_message_handler(order_track_command, commands=['order_track'])
+
+    dp.register_callback_query_handler(callback_change_selected_karaoke, Text(startswith='change_selected_karaoke'))
 
     dp.register_message_handler(
         add_link,
