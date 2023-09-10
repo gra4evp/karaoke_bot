@@ -144,3 +144,21 @@ def add_performance_to_visitor(telegram_id: int, track_url: str):
                 raise InvalidAccountStateError(account_id=account.id, state='visitor')
         else:
             raise TelegramProfileNotFoundError(telegram_id)
+
+
+def get_visitor_karaoke_names(telegram_id: int) -> set:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            visitor: Visitor = account.visitor
+            if visitor is not None:
+                karaokes = visitor.karaokes
+                if karaokes is not None:
+                    return {karaoke.name for karaoke in karaokes}
+
+                raise EmptyFieldError('Visitor', 'karaokes')
+
+            raise InvalidAccountStateError(account_id=account.id, state='visitor')
+
+        raise TelegramProfileNotFoundError(telegram_id=telegram_id)
