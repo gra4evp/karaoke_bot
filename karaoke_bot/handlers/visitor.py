@@ -147,6 +147,7 @@ async def callback_change_selected_karaoke(callback: types.CallbackQuery, state:
                 async with state.proxy() as data:
                     karaoke_name = data.get('karaoke_name')
 
+                # TODO продумать как будет выглядит меню кнопок если караоке будет очень много
                 text_list = ''
                 for index, kname in enumerate(karaoke_names - {karaoke_name}):  # убираем из множества текущее караоке
                     text_list += f'\n– {kname}'
@@ -156,6 +157,8 @@ async def callback_change_selected_karaoke(callback: types.CallbackQuery, state:
                         keyboard.add(button)
                     else:
                         keyboard.insert(button)
+
+                keyboard.add(InlineKeyboardButton(text="🔍 Search karaoke", callback_data='search_karaoke'))
 
                 await callback.message.answer(
                     f"Select <b>karaoke</b> where you want to order a track.\n\nYour karaoke list:{text_list}",
@@ -254,7 +257,7 @@ async def link_is_invalid(message: types.Message, state: FSMContext):
 def register_visitor_handlers(dp: Dispatcher):
     dp.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
 
-    dp.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'))
+    dp.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'), state='*')
 
     dp.register_message_handler(search_karaoke, state=KaraokeSearch.name)
 
