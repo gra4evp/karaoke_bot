@@ -132,20 +132,46 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         )
 
 
-async def callback_change_selected_karaoke(callback: types.CallbackQuery):
+async def callback_change_selected_karaoke(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
     keyboard = InlineKeyboardMarkup()
-    # callback_data = callback.data.split(' ')[1:]
-    match callback.data:
-        case "change_selected_karaoke":
-            try:
-                karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
-            except EmptyFieldError as e:
-                print(f"ERROR OCCURRED: {e}")
+    callback_data = callback.data.split(' ')[1:]
+
+    async with state.proxy() as data:
+        karaoke_name = data.get('karaoke_name')
+
+    try:
+        karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
+    except EmptyFieldError as e:
+        print(f"ERROR OCCURRED: {e}")
+    else:
+        text_list = ''
+        keyboard = InlineKeyboardMarkup()
+        for index, kname in enumerate(karaoke_names - {karaoke_name}):  # убираем из множества текущее караоке
+            text_list += f'\n– {kname}'
+            button = InlineKeyboardButton(text=kname, callback_data=f'change_selected_karaoke {kname}')
+
+            if index % 2 == 0:
+                keyboard.add(button)
             else:
-                # нужно из множества караоке убрать то активное, которое сейчас используется
-                pass
+                keyboard.insert(button)
+
+        await callback.message.answer(
+            f"Select <b>karaoke</b> where you want to order a track.\n\nYour karaoke list:{text_list}",
+            reply_markup=keyboard,
+            parse_mode='HTML'
+        )
+
+    # match callback.data:
+    #     case "change_selected_karaoke":
+    #         try:
+    #             karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
+    #         except EmptyFieldError as e:
+    #             print(f"ERROR OCCURRED: {e}")
+    #         else:
+    #             # нужно из множества караоке убрать то активное, которое сейчас используется
+    #             pass
 
 
 async def add_link(message: types.Message, state: FSMContext):
@@ -168,13 +194,21 @@ async def add_link(message: types.Message, state: FSMContext):
         await state.finish()
 
 
-async def link_is_invalid(message: types.Message):
+async def link_is_invalid(message: types.Message, state: FSMContext):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Change karaoke", callback_data='change_selected_karaoke'))
+
+    async with state.proxy() as data:
+        karaoke_name = data.get('karaoke_name')
+
     await message.reply(
-        "It seems you sent something wrong."
-        "Please send a <b>link</b> to the track on YouTube\n\n"
-        "The <b>link</b> must be in the format:\n"
-        "✅ - https://youtu.be/\n"
-        "✅ - https://www.youtube.com/",
+        f"The <b>link</b> must be in the format:\n"
+        f"✅ - https://youtu.be/\n"
+        f"✅ - https://www.youtube.com/\n\n"
+        f"Please try again"
+        f"\n\n<b>Selected karaoke:</b> {karaoke_name}",
+        reply_markup=keyboard,
+        disable_web_page_preview=True,
         parse_mode='HTML'
     )
 
@@ -215,7 +249,11 @@ def register_visitor_handlers(dp: Dispatcher):
 
     dp.register_message_handler(order_track_command, commands=['order_track'])
 
-    dp.register_callback_query_handler(callback_change_selected_karaoke, Text(startswith='change_selected_karaoke'))
+    dp.register_callback_query_handler(
+        callback_change_selected_karaoke,
+        Text(startswith='change_selected_karaoke'),
+        state=OrderTrack.link
+    )
 
     dp.register_message_handler(
         add_link,
