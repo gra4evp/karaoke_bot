@@ -87,7 +87,9 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         await callback.message.answer(text=e.args[0])
     else:
         await callback.message.answer("✅ Success! You have subscribed!")
-        current_state = await state.get_state()
+
+        # TODO пофиксить баг, с тем что после поиска /search_karaoke мы попадаем сразу в /order_track (примемлимо если сразу нажато было /order_track)
+        # current_state = await state.get_state()
         await order_track_command(callback.message, state, callback.from_user.id)
 
 
@@ -144,7 +146,6 @@ async def callback_change_selected_karaoke(callback: types.CallbackQuery):
             else:
                 # нужно из множества караоке убрать то активное, которое сейчас используется
                 pass
-
 
 
 async def add_link(message: types.Message, state: FSMContext):
