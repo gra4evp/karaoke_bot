@@ -4,15 +4,14 @@ from aiogram.dispatcher import FSMContext
 from karaoke_bot.states.visitor_states import OrderTrack, KaraokeSearch
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.markdown import hlink
-from .other import register_telegram_user
-from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
+from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.karaoke_gram.karaoke import add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_selected_karaoke_data,\
     add_performance_to_visitor, get_visitor_karaoke_names, change_selected_karaoke, get_karaoke_owner_id
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
-from .utils import format_subscribers_count
+from karaoke_bot.handlers.utils import format_subscribers_count
 
 
 async def search_karaoke_command(message: types.Message):

@@ -1,7 +1,9 @@
 from aiogram.utils import executor
 from create_bot import dispatcher
-from handlers import admin, other, visitor, owner, moderator
-
+from karaoke_bot.handlers.scripts.common import other
+from karaoke_bot.handlers.scripts.visitor import visitor
+from karaoke_bot.handlers.scripts.admin import admin
+from karaoke_bot.handlers.scripts.owner import owner
 
 other.register_other_handlers(dispatcher)
 owner.register_owner_handlers(dispatcher)
