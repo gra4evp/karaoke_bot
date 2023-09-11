@@ -108,13 +108,13 @@ async def new_karaoke_command_confirm(
         state: FSMContext,
         keyboard: InlineKeyboardMarkup | None = None) -> None:
 
-    confirm_text = "<b>CONFIRM THE CREATION OF KARAOKE</b>"
+    confirm_text = "<b>CONFIRM THE CREATION OF KARAOKE</b>\n\n"
     async with state.proxy() as data:
         name = data.get('karaoke_name')
         avatar_id = data.get('karaoke_avatar')
         description = data.get('description')
 
-    text = confirm_text + f"\nNAME: {name}"
+    text = confirm_text + f"<b>NAME</b>: {name}"
     if description is not None:
         text += f"\n🗓 <b>DESCRIPTION</b>: {description}"
 
