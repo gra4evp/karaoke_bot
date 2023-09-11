@@ -10,11 +10,3 @@ class NewKaraoke(StatesGroup):
     edit_avatar = State()
     edit_description = State()
     confirm = State()
-
-
-class KaraokeSearch(StatesGroup):
-    name = State()
-
-
-class OrderTrack(StatesGroup):
-    link = State()
