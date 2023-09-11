@@ -7,8 +7,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.markdown import hlink
 from .other import register_telegram_user
 from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke, add_track_to_queue
-from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, subscribe_to_karaoke,\
-    get_selected_karaoke_data, add_performance_to_visitor, get_visitor_karaoke_names
+from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_selected_karaoke_data,\
+    add_performance_to_visitor, get_visitor_karaoke_names, change_selected_karaoke, get_karaoke_owner_id
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
@@ -134,44 +134,57 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
 
 async def callback_change_selected_karaoke(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
+    await callback.message.edit_reply_markup()  # delete markup
 
     keyboard = InlineKeyboardMarkup()
-    callback_data = callback.data.split(' ')[1:]
-
-    async with state.proxy() as data:
-        karaoke_name = data.get('karaoke_name')
-
-    try:
-        karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
-    except EmptyFieldError as e:
-        print(f"ERROR OCCURRED: {e}")
-    else:
-        text_list = ''
-        keyboard = InlineKeyboardMarkup()
-        for index, kname in enumerate(karaoke_names - {karaoke_name}):  # убираем из множества текущее караоке
-            text_list += f'\n– {kname}'
-            button = InlineKeyboardButton(text=kname, callback_data=f'change_selected_karaoke {kname}')
-
-            if index % 2 == 0:
-                keyboard.add(button)
+    match callback.data.split(' '):
+        case ['change_selected_karaoke']:
+            try:
+                karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
+            except EmptyFieldError as e:
+                print(f"ERROR OCCURRED: {e}")
             else:
-                keyboard.insert(button)
+                async with state.proxy() as data:
+                    karaoke_name = data.get('karaoke_name')
 
-        await callback.message.answer(
-            f"Select <b>karaoke</b> where you want to order a track.\n\nYour karaoke list:{text_list}",
-            reply_markup=keyboard,
-            parse_mode='HTML'
-        )
+                text_list = ''
+                for index, kname in enumerate(karaoke_names - {karaoke_name}):  # убираем из множества текущее караоке
+                    text_list += f'\n– {kname}'
+                    button = InlineKeyboardButton(text=kname, callback_data=f'change_selected_karaoke {kname}')
 
-    # match callback.data:
-    #     case "change_selected_karaoke":
-    #         try:
-    #             karaoke_names = get_visitor_karaoke_names(telegram_id=callback.from_user.id)
-    #         except EmptyFieldError as e:
-    #             print(f"ERROR OCCURRED: {e}")
-    #         else:
-    #             # нужно из множества караоке убрать то активное, которое сейчас используется
-    #             pass
+                    if index % 2 == 0:
+                        keyboard.add(button)
+                    else:
+                        keyboard.insert(button)
+
+                await callback.message.answer(
+                    f"Select <b>karaoke</b> where you want to order a track.\n\nYour karaoke list:{text_list}",
+                    reply_markup=keyboard,
+                    parse_mode='HTML'
+                )
+        case ['change_selected_karaoke', karaoke_name]:
+            try:
+                change_selected_karaoke(telegram_id=callback.from_user.id, karaoke_name=karaoke_name)
+            except KaraokeNotFoundError as e:
+                print(f"ERROR OCCURRED: {e}")
+            else:  # если удалось поменять selected_karaoke, пробуем узнать owner_id
+                try:
+                    owner_id = get_karaoke_owner_id(karaoke_name=karaoke_name)
+                except EmptyFieldError as e:
+                    print(f"ERROR OCCURRED: {e}")
+                else:
+                    async with state.proxy() as data:
+                        data['karaoke_name'] = karaoke_name
+                        data['owner_id'] = owner_id
+
+                    keyboard.add(InlineKeyboardButton(text="Change karaoke", callback_data='change_selected_karaoke'))
+                    await bot.send_message(
+                        chat_id=callback.from_user.id,
+                        text=f"Please send a link to the track on YouTube or XMinus\n\n"
+                             f"<b>Selected karaoke:</b> {karaoke_name}",
+                        reply_markup=keyboard,
+                        parse_mode='HTML'
+                    )
 
 
 async def add_link(message: types.Message, state: FSMContext):
