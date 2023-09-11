@@ -6,8 +6,7 @@ from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
 from .other import register_telegram_user
-from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile, karaoke_not_exists,\
-    create_karaoke, create_karaoke_session
+from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
 
 
