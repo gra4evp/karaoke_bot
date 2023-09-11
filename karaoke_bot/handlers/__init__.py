@@ -1,3 +1,1 @@
-from . import admin
-from . import client
-from . import other
+from . import admin, other, visitor, owner, moderator

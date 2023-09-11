@@ -9,29 +9,15 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils.markdown import hlink
 from unique_links_parse import get_unique_links, load_links_by_user_id
-from sqlalchemy_orm import VisitorPerformance, Recommendations, engine
+from sqlalchemy_orm import VisitorPerformance, Recommendations, Base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 import time
 import csv
+import os
 
-# подключение к бд
-Session = sessionmaker(bind=engine)
-session = Session()
 
-API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
-# API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
-bot = Bot(token=API_TOKEN)
-
-storage = MemoryStorage()
-dispatcher = Dispatcher(bot, storage=storage)
-
-user_ids = {}
-
-# admin_id = 1206756552  # владелец бара
-# admin_id = 345705084  # kuks_51
-# admin_id = 375571119  # gra4evp
-# admin_id = 134566371  # gleb_kukuruz
-admin_id = 5774261029  # Rayan - ведущий
+print(f"Текущий рабочий каталог: {os.getcwd()}")
 
 
 class FSMOrderTrack(StatesGroup):
@@ -42,10 +28,6 @@ class FSMMassMessage(StatesGroup):
     text = State()
     image = State()
     confirm = State()
-
-
-unique_links = get_unique_links('id_url_all.csv')
-links_by_user_id = load_links_by_user_id('links_by_user_id.json')
 
 
 async def start(message: types.Message):
@@ -82,6 +64,10 @@ async def get_next_link_round_command(message: types.Message):
 async def order_track_command(message: types.Message):
     await message.answer('Good! Add youtube link 😉')
     await FSMOrderTrack.track_url.set()
+
+
+async def state_order_track_is_invalid(message: types.Message):
+    await message.answer('You added the link incorrectly, please try again 😉')
 
 
 async def add_link(message: types.Message, state: FSMContext):
@@ -123,10 +109,6 @@ async def get_recommendation(message: types.Message):
                                      is_accepted=False, created_at=message.date, updated_at=message.date)
     session.add(recommendation)
     session.commit()
-
-
-async def state_order_track_is_invalid(message: types.Message):
-    await message.answer('You added the link incorrectly, please try again 😉')
 
 
 async def callback_order_this_track(callback: types.CallbackQuery):
@@ -337,7 +319,12 @@ def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(add_link,
                                         Text(startswith=['https://www.youtube.com/watch?v=',
                                                          'https://youtu.be/',
-                                                         'https://xminus.me/track/']),
+                                                         'https://xminus.me/track/',
+                                                         'https://x-minus.cc/track/',
+                                                         'https://x-minus.me/track/',
+                                                         'https://x-minus.pro/track/',
+                                                         'https://x-minus.club/track/',
+                                                         'https://xm-rus.top/track/']),
                                         state=FSMOrderTrack.track_url)
     dispatcher.register_message_handler(state_order_track_is_invalid, content_types='any',
                                         state=FSMOrderTrack.track_url)
@@ -374,5 +361,34 @@ def register_handlers(dispatcher: Dispatcher):
 
 
 if __name__ == "__main__":
+    # подключение к бд
+    debug_mode = False
+    if debug_mode:
+        engine = create_engine('sqlite:///karaoke_old_version_debug.db')
+    else:
+        engine = create_engine('sqlite:///karaoke_old_version.db')
+    Base.metadata.create_all(engine)
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    API_TOKEN = "5761106314:AAHRTn5aJwpIiswWNoRpphpuZh38GD-gsP0"
+    # API_TOKEN = "6157408135:AAGNyYeInRXTrbGVdx_qXaiWHgDxTJP2b5w"  # мой тестовый бот
+    bot = Bot(token=API_TOKEN)
+
+    storage = MemoryStorage()
+    dispatcher = Dispatcher(bot, storage=storage)
+
+    user_ids = {}
+
+    admin_id = 1206756552  # владелец бара
+    # admin_id = 345705084  # kuks_51
+    # admin_id = 375571119  # gra4evp
+    # admin_id = 134566371  # gleb_kukuruz
+    # admin_id = 5774261029  # Rayan - ведущий
+
+    unique_links = get_unique_links('id_url_all.csv')
+    links_by_user_id = load_links_by_user_id('links_by_user_id.json')
+
     register_handlers(dispatcher)
     executor.start_polling(dispatcher, skip_updates=True)

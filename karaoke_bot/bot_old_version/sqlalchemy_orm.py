@@ -2,11 +2,9 @@ from sqlalchemy import Integer, String, Boolean, DATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-from sqlalchemy import create_engine
 
 
 Base = declarative_base()
-engine = create_engine('sqlite:///karaoke_old_version.db')
 
 
 class VisitorPerformance(Base):
@@ -30,5 +28,3 @@ class Recommendations(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
 
-
-Base.metadata.create_all(engine)
