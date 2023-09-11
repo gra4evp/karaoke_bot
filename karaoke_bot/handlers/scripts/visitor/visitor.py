@@ -253,7 +253,7 @@ async def link_is_invalid(message: types.Message, state: FSMContext):
 #                 await message.answer("🗒 You haven't ordered any tracks yet")
 
 
-def register_visitor_handlers(dp: Dispatcher):
+def register_handlers(dp: Dispatcher):
     dp.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
 
     dp.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'), state='*')

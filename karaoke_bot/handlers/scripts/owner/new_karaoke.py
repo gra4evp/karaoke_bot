@@ -226,7 +226,7 @@ async def register_karaoke(state: FSMContext):
         await state.finish()
 
 
-def register_owner_handlers(dp: Dispatcher):
+def register_handlers(dp: Dispatcher):
     dp.register_message_handler(new_karaoke_command, commands=['new_karaoke'])
 
     dp.register_message_handler(

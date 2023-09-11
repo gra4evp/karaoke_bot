@@ -137,7 +137,7 @@ async def callback_back_to_main_menu(callback: types.CallbackQuery):
 #     await callback.message.edit_text('\n'.join(rows), reply_markup=keyboard, parse_mode='HTML')
 
 
-def register_other_handlers(dispatcher: Dispatcher):
+def register_handlers(dispatcher: Dispatcher):
 
     dispatcher.register_callback_query_handler(callback_cancel_command, Text(equals='cancel'))
     dispatcher.register_message_handler(cancel_command, Text(equals='cancel', ignore_case=True), state='*')
