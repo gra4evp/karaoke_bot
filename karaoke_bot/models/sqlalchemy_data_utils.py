@@ -120,6 +120,46 @@ def get_selected_karaoke_data(telegram_id: int) -> tuple:
         raise TelegramProfileNotFoundError(telegram_id=telegram_id)
 
 
+def change_selected_karaoke(telegram_id: int, karaoke_name: str) -> None:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            visitor: Visitor = account.visitor
+            if visitor is not None:
+                karaoke: Karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
+                if karaoke is not None:
+                    visitor.selected_karaoke = karaoke
+                    session.commit()
+                else:
+                    raise KaraokeNotFoundError(karaoke_name)
+            else:
+                raise InvalidAccountStateError(account_id=account.id, state='visitor')
+        else:
+            raise TelegramProfileNotFoundError(telegram_id=telegram_id)
+
+
+def get_karaoke_owner_id(karaoke_name: str) -> int:
+    with AlchemySession() as session:
+        karaoke: Karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
+        if karaoke is not None:
+            owner: Owner = karaoke.owner
+            if owner is not None:
+                account: Account = owner.account
+                if account is not None:
+                    telegram_profile: TelegramProfile = account.telegram_profile
+                    if telegram_profile is not None:
+                        return telegram_profile.id
+
+                    raise EmptyFieldError('accounts', 'telegram_profile')
+
+                raise EmptyFieldError('owners', 'account')
+
+            raise EmptyFieldError('karaokes', 'owner')
+
+        raise KaraokeNotFoundError(karaoke_name)
+
+
 def add_performance_to_visitor(telegram_id: int, track_url: str):
     with AlchemySession() as session:
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
