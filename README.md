@@ -17,3 +17,8 @@ cd karaoke_bot
 ```bash
 poetry install
 ```
+
+4. После этого вам нужно активировать виртуальное окружение:
+```bash
+poetry shell
+```
