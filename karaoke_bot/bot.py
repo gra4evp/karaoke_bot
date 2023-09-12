@@ -1,11 +1,15 @@
 from aiogram.utils import executor
 from create_bot import dispatcher
-from handlers import admin, other, visitor, owner, moderator
+from karaoke_bot.handlers.scripts import admin, moderator, owner, visitor, common
 
 
-other.register_other_handlers(dispatcher)
-owner.register_owner_handlers(dispatcher)
-visitor.register_visitor_handlers(dispatcher)
-admin.register_admin_handlers(dispatcher)
+common.other.register_handlers(dispatcher)
+
+owner.new_karaoke.register_handlers(dispatcher)
+owner.queue.register_handlers(dispatcher)
+
+visitor.search_karaoke.register_handlers(dispatcher)
+visitor.order_track.register_handlers(dispatcher)
+visitor.change_selected_karaoke.register_handlers(dispatcher)
 
 executor.start_polling(dispatcher, skip_updates=True)

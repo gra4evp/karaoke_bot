@@ -5,7 +5,7 @@ from karaoke_bot.states.owner_states import NewKaraoke
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
-from .other import register_telegram_user
+from karaoke_bot.handlers.scripts.common.other import register_telegram_user
 from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
 
@@ -226,7 +226,7 @@ async def register_karaoke(state: FSMContext):
         await state.finish()
 
 
-def register_owner_handlers(dp: Dispatcher):
+def register_handlers(dp: Dispatcher):
     dp.register_message_handler(new_karaoke_command, commands=['new_karaoke'])
 
     dp.register_message_handler(

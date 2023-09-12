@@ -78,7 +78,7 @@ async def callback_remove_from_queue(callback: types.CallbackQuery):
     print(ready_to_play_karaoke_list)
 
 
-def register_admin_handlers(dispatcher: Dispatcher):
+def register_handlers(dispatcher: Dispatcher):
     dispatcher.register_message_handler(show_queue_command, commands=['show_queue'])
     dispatcher.register_message_handler(show_circular_queue_command, commands=['show_circular_queue'])
     dispatcher.register_callback_query_handler(callback_remove_from_queue, Text(startswith='rm_from_queue'))
