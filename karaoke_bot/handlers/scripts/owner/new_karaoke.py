@@ -64,7 +64,7 @@ async def karaoke_avatar_registration(message: types.Message, state: FSMContext)
         await NewKaraoke.description.set()
         keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
         await message.answer(
-            "Now come up with 🗓 <b>DESCRIPTION</b> for your karaoke",
+            "Now come up with 🗒 <b>DESCRIPTION</b> for your karaoke",
             reply_markup=keyboard,
             parse_mode='HTML')
     else:
@@ -92,12 +92,12 @@ async def karaoke_description_registration(message: types.Message, state: FSMCon
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
         keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
-        await message.answer('✅ Success! 🗓 <b>DESCRIPTION</b> updated.', reply_markup=keyboard, parse_mode='HTML')
+        await message.answer('✅ Success! 🗒 <b>DESCRIPTION</b> updated.', reply_markup=keyboard, parse_mode='HTML')
 
 
 async def karaoke_description_is_invalid(message: types.Message) -> None:
     await message.reply(
-        "The maximum length of the 🗓 <b>DESCRIPTION</b> should not exceed 500 characters",
+        "The maximum length of the 🗒 <b>DESCRIPTION</b> should not exceed 500 characters",
         parse_mode='HTML'
     )
 
@@ -115,13 +115,13 @@ async def new_karaoke_command_confirm(
 
     text = confirm_text + f"<b>NAME</b>: {name}"
     if description is not None:
-        text += f"\n🗓 <b>DESCRIPTION</b>: {description}"
+        text += f"\n🗒 <b>DESCRIPTION</b>: {description}"
 
     if keyboard is None:
         keyboard = InlineKeyboardMarkup()
         keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
         keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
-        keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='new_karaoke delete'))
+        keyboard.add(InlineKeyboardButton('❌ Cancel', callback_data='new_karaoke cancel'))
 
     if avatar_id is not None:
         await message.answer_photo(photo=avatar_id, caption=text, reply_markup=keyboard, parse_mode='HTML')
@@ -149,7 +149,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
         case ('edit',):
             keyboard.add(InlineKeyboardButton("💬 Edit name", callback_data='new_karaoke edit name'))
             keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
-            keyboard.add(InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit description'))
+            keyboard.add(InlineKeyboardButton("🗒 Edit description", callback_data='new_karaoke edit description'))
             keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
             await callback.message.edit_reply_markup(keyboard)
         case ('edit', 'name'):
@@ -160,13 +160,13 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await callback.message.answer('Attach the 🖼 <b>AVATAR</b>  you want', parse_mode='HTML')
         case ('edit', 'description'):
             await NewKaraoke.edit_description.set()
-            await callback.message.answer('What 🗓 <b>DESCRIPTION</b> would you like?', parse_mode='HTML')
+            await callback.message.answer('What 🗒 <b>DESCRIPTION</b> would you like?', parse_mode='HTML')
         case ('skip', 'avatar'):
             await NewKaraoke.description.set()
             await callback.message.edit_reply_markup()  # delete markup
             keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
             await callback.message.answer(
-                "Now come up with 🗓 <b>DESCRIPTION</b> for your karaoke",
+                "Now come up with 🗒 <b>DESCRIPTION</b> for your karaoke",
                 reply_markup=keyboard,
                 parse_mode='HTML'
             )
@@ -195,7 +195,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await callback.message.delete()
             keyboard.add(InlineKeyboardButton("💬 Edit name", callback_data='new_karaoke edit name'))
             keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
-            keyboard.add(InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit description'))
+            keyboard.add(InlineKeyboardButton("🗒 Edit description", callback_data='new_karaoke edit description'))
             keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
             await new_karaoke_command_confirm(message=callback.message, state=state, keyboard=keyboard)
 
