@@ -6,6 +6,7 @@ from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from string import ascii_letters, digits
 from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
 from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
 
@@ -26,6 +27,7 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
     if karaoke_not_exists(karaoke_name):
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
+            data['message_karaoke_name'] = message
 
         current_state = await state.get_state()
         keyboard = InlineKeyboardMarkup()
@@ -145,7 +147,12 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await callback.message.edit_reply_markup(keyboard)
         case ('create', 'force'):
             await callback.message.delete()
-            await register_karaoke(state)
+
+            async with state.proxy() as data:
+                message_karaoke_name: types.message = data.get('message_karaoke_name')
+
+            await register_karaoke(state)  # внутри функции state.finish(), обращаться к state.proxy() нужно заранее
+            await search_karaoke(message=message_karaoke_name, state=state)
         case ('edit',):
             keyboard.add(InlineKeyboardButton("💬 Edit name", callback_data='new_karaoke edit name'))
             keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
