@@ -53,7 +53,7 @@ def create_karaoke_session(karaoke_name: str) -> None:
             raise KaraokeNotFoundError(karaoke_name=karaoke_name)
 
 
-def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str) -> None:
+def create_karaoke(telegram_id: int, name: str, avatar_id: str | None, description: str | None) -> None:
     with AlchemySession() as session:
 
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
