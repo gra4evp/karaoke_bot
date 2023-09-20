@@ -24,7 +24,7 @@ async def callback_change_selected_karaoke(callback: types.CallbackQuery, state:
             else:
                 async with state.proxy() as data:
                     karaoke_name = data.get('karaoke_name')
-
+                # TODO обдумать случай сообщения если будет всего одно караоке т.е пустой text_list
                 # TODO продумать как будет выглядит меню кнопок если караоке будет очень много
                 text_list = ''
                 for index, kname in enumerate(karaoke_names - {karaoke_name}):  # убираем из множества текущее караоке
