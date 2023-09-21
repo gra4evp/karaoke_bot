@@ -1,4 +1,3 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 keyboard_confirm = InlineKeyboardMarkup()
@@ -14,7 +13,28 @@ keyboard_edit.add(InlineKeyboardButton("🗒 Edit description", callback_data='n
 keyboard_edit.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
 
 
+keyboard_back_to = InlineKeyboardMarkup()
+keyboard_back_to.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
+keyboard_back_to.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
+
+
+keyboard_create = InlineKeyboardMarkup()
+keyboard_create.add(
+    InlineKeyboardButton("✅ Create", callback_data='new_karaoke create force'),
+    InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
+)
+
+
+keyboard_cancel = InlineKeyboardMarkup()
+keyboard_cancel.add(
+    InlineKeyboardButton("❌ Cancel", callback_data='new_karaoke cancel force'),
+    InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
+)
+
 keyboards = {
     'confirm': keyboard_confirm,
-    'edit': keyboard_edit
+    'edit': keyboard_edit,
+    'back_to': keyboard_back_to,
+    'create': keyboard_create,
+    'cancel': keyboard_cancel
 }
