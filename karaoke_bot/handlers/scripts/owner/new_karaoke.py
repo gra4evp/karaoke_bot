@@ -136,7 +136,6 @@ async def new_karaoke_command_confirm(
 
 async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    # button_options = {}  # сделать словарь с кнопками позже
 
     keyboard = InlineKeyboardMarkup()
     callback_data = callback.data.split(' ')[1:]
