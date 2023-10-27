@@ -95,6 +95,7 @@ async def link_is_invalid(message: types.Message, state: FSMContext):
 
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(order_track_command, commands=['order_track'])
+    dp.register_message_handler(order_track_command, Text(equals='Order a track'))
 
     dp.register_message_handler(
         add_link,

@@ -106,37 +106,6 @@ async def callback_back_to_main_menu(callback: types.CallbackQuery):
 #                              parse_mode='HTML')
 
 
-# async def callback_change_active_karaoke(callback: types.CallbackQuery):
-#     user_info, _ = sqlite_db.sql_get_user_status(callback.from_user.id)
-#     if user_info is not None:  # если пользователь такой есть
-#         active_karaoke, karaoke_list = user_info
-#         karaoke_list = karaoke_list.split('; ')
-#
-#         keyboard = InlineKeyboardMarkup()
-#         for i in range(len(karaoke_list)):
-#             karaoke_name = karaoke_list[i]
-#             button = InlineKeyboardButton(text=karaoke_name, callback_data=f'change_to {karaoke_name}')
-#
-#             if i % 2 == 0:
-#                 keyboard.add(button)
-#             else:
-#                 keyboard.insert(button)
-#         await callback.message.edit_reply_markup(keyboard)
-#
-#
-# async def callback_change_to(callback: types.CallbackQuery):
-#     karaoke_name = callback.data.split(' ')[-1]
-#     user_id = callback.from_user.id
-#     await sqlite_db.sql_update_user_active_karaoke(active_karaoke=karaoke_name, user_id=user_id)
-#
-#     rows = callback.message.html_text.split('\n')
-#     rows[-1] = f"🎤 {karaoke_name}"
-#
-#     keyboard = InlineKeyboardMarkup()
-#     keyboard.add(InlineKeyboardButton(text='Change active karaoke', callback_data='change_active_karaoke'))
-#     await callback.message.edit_text('\n'.join(rows), reply_markup=keyboard, parse_mode='HTML')
-
-
 def register_handlers(dispatcher: Dispatcher):
 
     dispatcher.register_callback_query_handler(callback_cancel_command, Text(equals='cancel'))

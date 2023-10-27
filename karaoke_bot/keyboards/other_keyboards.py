@@ -3,8 +3,10 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 other_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
 
-b1 = KeyboardButton("Status")
-b2 = KeyboardButton("Cancel")
+order_track = KeyboardButton("Order a track")
+status = KeyboardButton("Status")
+cancel = KeyboardButton("Cancel")
 
-other_keyboard.add(b1)
-other_keyboard.insert(b2)
+other_keyboard.add(order_track)
+other_keyboard.add(status)
+other_keyboard.insert(cancel)
