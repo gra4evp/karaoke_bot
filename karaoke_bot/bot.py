@@ -11,5 +11,6 @@ owner.queue.register_handlers(dispatcher)
 visitor.search_karaoke.register_handlers(dispatcher)
 visitor.order_track.register_handlers(dispatcher)
 visitor.change_selected_karaoke.register_handlers(dispatcher)
+visitor.show_my_orders.register_handlers(dispatcher)
 
 executor.start_polling(dispatcher, skip_updates=True)

@@ -50,6 +50,10 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         )
 
 
+async def callback_go_to_karaoke_search(callback: types.CallbackQuery, state: FSMContext):
+    pass
+
+
 async def add_link(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         karaoke_name = data.get('karaoke_name')
