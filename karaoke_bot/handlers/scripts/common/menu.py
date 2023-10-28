@@ -43,6 +43,11 @@ async def callback_menu_command(callback: types.CallbackQuery):
             keyboard.insert(InlineKeyboardButton(text="Membering", callback_data='menu membering_karaoke'))
             keyboard.add(InlineKeyboardButton(text='<< Back', callback_data='menu back'))
             await callback.message.edit_text('Information about your karaoke', reply_markup=keyboard)
+        case ('managed_karaoke'):
+            try:
+                pass
+            except:
+                pass
         case ('membering_karaoke',):
             try:
                 karaokes_data = get_visitor_karaokes_data(telegram_id=callback.from_user.id)

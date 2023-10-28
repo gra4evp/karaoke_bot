@@ -125,7 +125,7 @@ def get_selected_karaoke_data(telegram_id: int) -> tuple:
             if visitor is not None:
                 selected_karaoke: Karaoke = visitor.selected_karaoke
                 if selected_karaoke is not None:
-                    return selected_karaoke.name, selected_karaoke.owner.account_id
+                    return selected_karaoke.name, selected_karaoke.owner.account.telegram_profile.id
 
                 raise EmptyFieldError('Visitor', 'selected_karaoke')
 
