@@ -5,6 +5,7 @@ from aiogram.utils.markdown import hlink
 from karaoke_bot.karaoke_gram.karaoke import ready_to_play_karaoke_list
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from karaoke_bot.karaoke_gram.types import TrackRemoved
+from karaoke_bot.karaoke_gram.utils import find_first_match_karaoke
 
 
 async def show_queue_command(message: types.Message):
