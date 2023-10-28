@@ -4,6 +4,7 @@ from karaoke_bot.handlers.scripts import admin, moderator, owner, visitor, commo
 
 
 common.other.register_handlers(dispatcher)
+common.menu.register_handlers(dispatcher)
 
 owner.new_karaoke.register_handlers(dispatcher)
 owner.queue.register_handlers(dispatcher)
