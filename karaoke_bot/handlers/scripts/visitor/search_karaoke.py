@@ -45,7 +45,8 @@ async def search_karaoke(message: types.Message, state: FSMContext):
 
             for visitor in subscribers:
                 if message.from_user.id == visitor.account.telegram_profile.id:
-                    keyboard = None
+                    keyboard = InlineKeyboardMarkup()
+                    keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
                     caption += "\n\n✅ You have already subscribed!"
                     break
 
@@ -93,6 +94,7 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
 
 def register_handlers(dp: Dispatcher):
     dp.register_message_handler(search_karaoke_command, commands=['search_karaoke'])
+    dp.register_message_handler(search_karaoke_command, Text(startswith='search karaoke', ignore_case=True))
 
     dp.register_callback_query_handler(callback_search_karaoke_command, Text(equals='search_karaoke'), state='*')
 

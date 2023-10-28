@@ -11,6 +11,11 @@ from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundErro
     EmptyFieldError, InvalidAccountStateError
 
 
+async def callback_order_track_command(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await order_track_command(message=callback.message, state=state, user_id=callback.from_user.id)
+
+
 async def order_track_command(message: types.Message, state: FSMContext, user_id=None):
     if user_id is None:
         user_id = message.from_user.id
@@ -94,6 +99,7 @@ async def link_is_invalid(message: types.Message, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
+    dp.register_callback_query_handler(callback_order_track_command, Text('order_track'))
     dp.register_message_handler(order_track_command, commands=['order_track'])
     dp.register_message_handler(order_track_command, Text(equals='Order a track'))
 
