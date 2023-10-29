@@ -1,6 +1,6 @@
 from yt_dlp import YoutubeDL
 from typing import Dict
-from .track_status import TrackStatus, TrackWaited
+from .track_status import TrackStatus, TrackWaited, TrackRemoved
 
 
 class Track:
@@ -19,6 +19,9 @@ class Track:
 
     def get_info(self):
         raise NotImplementedError
+
+    def remove(self):
+        self.status = TrackRemoved()
 
     def __str__(self):
         pass
