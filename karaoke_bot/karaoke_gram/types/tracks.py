@@ -4,6 +4,13 @@ from .track_status import TrackStatus, TrackWaited
 
 
 class Track:
+    _track_counter = 0  # Счетчик для порядковых номеров треков (id)
+
+    def __new__(cls, url):
+        instance = super(Track, cls).__new__(cls)
+        Track._track_counter += 1
+        instance.id = Track._track_counter
+        return instance
 
     def __init__(self, url):
         self.url = url
