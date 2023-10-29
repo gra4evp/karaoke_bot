@@ -1,11 +1,12 @@
 from aiogram.types import User
-from typing import Type, List
+from typing import Type, List, Any
 from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
 
 
 class KaraokeUser:
 
     def __init__(self, aiogram_user: User) -> None:
+        self.id: int = aiogram_user.id
         self.aiogram_user = aiogram_user
         self.playlist: List[Track] = []
         self.next_track_waited = self.get_next_track_with_status(TrackWaited)
@@ -39,8 +40,14 @@ class KaraokeUser:
         if 'xminus.me' in track_url:
             return XMinusTrack(track_url)
 
+    def find_first_match_track(self, where: dict[str, Any]) -> Track:
+        # возвращает первое совпадение по условию
+        for track in self.playlist:
+            if all(getattr(track, attr) == value for attr, value in where.items()):
+                return track
+
     def __str__(self) -> str:
-        return f"KaraokeUser(user={self.aiogram_user}, track_queue={list(self.playlist)})"
+        return f"KaraokeUser(id={self.id}, user={self.aiogram_user}, track_queue={list(self.playlist)})"
 
     def __repr__(self) -> str:
         return self.__str__()
