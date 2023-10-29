@@ -1,12 +1,9 @@
-from .karaoke import Karaoke, ready_to_play_karaoke_list
+from .karaoke import Karaoke
 from typing import Any, List
 
 
-def find_first_match_karaoke(
-        where: dict[str, Any],
-        karaokes: List[Karaoke] = ready_to_play_karaoke_list
-) -> Karaoke:
+def find_first_match_karaoke(karaokes: List[Karaoke], where: dict[str, Any]) -> Karaoke:
     # возвращает первое совпадение по условию
-    for kakaoke in karaokes:
-        if all(getattr(kakaoke, attr) == value for attr, value in where.items()):
-            return kakaoke
+    for karaoke in karaokes:
+        if all(getattr(karaoke, attr) == value for attr, value in where.items()):
+            return karaoke
