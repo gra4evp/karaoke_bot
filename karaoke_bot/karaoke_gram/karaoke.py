@@ -1,5 +1,5 @@
 from aiogram.types import User
-from typing import Type, List
+from typing import Type, List, Any
 from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
 from .karaoke_user import KaraokeUser
 
@@ -43,8 +43,11 @@ class Karaoke:
     def pop_next_user(self) -> KaraokeUser:
         return self.user_queue.pop(0) if self.user_queue else None
 
-    def find_user(self, user_id: int) -> KaraokeUser:  # генератор возвращает первое совпадение по имени или None
-        return next((user for user in self.user_queue if user.aiogram_user.id == user_id), None)
+    def find_first_match_user(self, where: dict[str, Any]) -> KaraokeUser:
+        # возвращает первое совпадение по условию
+        for user in self.user_queue:
+            if all(getattr(user, attr) == value for attr, value in where.items()):
+                return user
 
     def __str__(self) -> str:
         return f"Karaoke(name={self.name}, user_queue={list(self.user_queue)})"
@@ -65,7 +68,7 @@ def add_track_to_queue(user: User, karaoke_name: str, owner_id: int, track_url: 
         karaoke = Karaoke(karaoke_name, owner_id)
         ready_to_play_karaoke_list.append(karaoke)
 
-    karaoke_user = karaoke.find_user(user.id)
+    karaoke_user = karaoke.find_first_match_user(where={'id': user.id})
     if karaoke_user is None:  # Караоке есть, но такого пользователя в нем нет.
         karaoke_user = KaraokeUser(user)
         karaoke.add_user_to_queue(karaoke_user)

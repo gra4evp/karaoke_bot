@@ -29,7 +29,7 @@ async def show_my_orders_command(message: types.Message):
         if karaoke is None:
             await message.answer("🗒 You haven't ordered any tracks yet")
         else:
-            user = karaoke.find_user(message.from_user.id)
+            user = karaoke.find_first_match_user(where={'id': message.from_user.id})
             queue_length = len(user.playlist)
             if queue_length:
                 for i in range(queue_length):
