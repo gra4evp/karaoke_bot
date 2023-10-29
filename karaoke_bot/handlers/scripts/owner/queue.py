@@ -5,7 +5,7 @@ from aiogram.utils.markdown import hlink
 from karaoke_bot.karaoke_gram.karaoke import ready_to_play_karaoke_list
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from karaoke_bot.karaoke_gram.types import TrackRemoved
-from karaoke_bot.karaoke_gram.utils import find_first_match_karaoke
+from karaoke_bot.karaoke_gram.utils import find_first_match_karaoke, find_first_match_track
 
 
 async def show_queue_command(message: types.Message):
@@ -23,7 +23,7 @@ async def show_queue_command(message: types.Message):
                     keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                     keyboard.insert(InlineKeyboardButton(
                         text="❌ Remove from queue",
-                        callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {index}'))
+                        callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {track.id}'))
                     await message.answer(f"{track_number}. {hlink('Track', track.url)}\n"
                                          f"Ordered by: @{user.aiogram_user.username}\n"
                                          f"Karaoke: {karaoke.name}",
@@ -46,7 +46,7 @@ async def show_circular_queue_command(message: types.Message):
             keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
             keyboard.insert(InlineKeyboardButton(
                 text="❌ Remove from queue",
-                callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {index}')
+                callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {track.id}')
             )
             await message.answer(f"{track_number}. {hlink('Track', track.url)}\n"
                                  f"Ordered by: @{user.aiogram_user.username}\n"
@@ -56,26 +56,19 @@ async def show_circular_queue_command(message: types.Message):
 
 
 async def callback_remove_from_queue(callback: types.CallbackQuery):
-    karaoke_name, user_id, index = callback.data.replace('rm_from_queue ', '').split(' ')
+    await callback.answer()
+    karaoke_name, user_id, track_id = callback.data.replace('rm_from_queue ', '').split(' ')
 
-    for karaoke in ready_to_play_karaoke_list:
-        if karaoke_name == karaoke.name:
-            for user in karaoke.user_queue:
-                if int(user_id) == user.aiogram_user.id:
-                    try:
-                        user.playlist[int(index)].status = TrackRemoved()
-                        await callback.answer()
-                        await callback.message.edit_text(callback.message.text + f"\nTrack status: ❌ Removed",
-                                                         parse_mode='HTML')
-
-                        keyboard = InlineKeyboardMarkup()
-                        keyboard.add(InlineKeyboardButton(text="Restore 🔧", callback_data='set_to_perform'))
-                        await callback.message.edit_reply_markup(keyboard)
-                    except IndexError:
-                        await callback.message.answer("Error")
-                    break
-            break
-    print(ready_to_play_karaoke_list)
+    karaoke = find_first_match_karaoke(ready_to_play_karaoke_list, where={'owner_id': callback.from_user.id})
+    if karaoke is not None:
+        user = karaoke.find_first_match_user(where={'id': int(user_id)})
+        if user is not None:
+            track = user.find_first_match_track(where={'id': int(track_id)})
+            track.remove()
+            await callback.message.edit_text(callback.message.text + f"\nTrack status: ❌ Removed", parse_mode='HTML')
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(text="Restore 🔧", callback_data='set_to_perform'))
+            await callback.message.edit_reply_markup(keyboard)
 
 
 def register_handlers(dispatcher: Dispatcher):
