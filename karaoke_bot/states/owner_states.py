@@ -10,3 +10,7 @@ class NewKaraoke(StatesGroup):
     edit_avatar = State()
     edit_description = State()
     confirm = State()
+
+
+class LapQueue(StatesGroup):
+    pass
