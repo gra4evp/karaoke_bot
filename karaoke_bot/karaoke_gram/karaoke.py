@@ -1,5 +1,5 @@
 from aiogram.types import User
-from typing import Type, List, Any
+from typing import Type, List, Any, Tuple
 from .types import Track, TrackStatus, TrackWaited, YouTubeTrack, XMinusTrack
 from .karaoke_user import KaraokeUser
 
@@ -9,31 +9,51 @@ class Karaoke:
         self.name = name
         self.owner_id = owner_id
         self.user_queue: List[KaraokeUser] = []
-        self.track_num: int = 1
-        self.next_round = self.get_next_round()
+    #     self.track_num: int = 1
+    #     self.next_round = self.get_next_round()
 
-    def get_next_round(self):
-        while True:
-            round_queue = self._get_next_round_queue()
+    def how_many_laps(self) -> int:
+        return max(len(user.playlist) for user in self.user_queue)
 
-            if not round_queue:  # либо конец очереди, либо треков вообще нет
-                # организовать удаление
-                self._yield_none_switcher(False)
-                round_queue = self._get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
-                self._yield_none_switcher(True)
-            yield round_queue
-
-    def _get_next_round_queue(self):
-        round_queue = []
+    def get_lap_queue(self, lap_number: int) -> List[Tuple[KaraokeUser, Track]]:
+        lap = []
         for user in self.user_queue:
-            track = next(user.next_track_waited)
-            if track is not None:
-                round_queue.append((user, track))
-        return round_queue
+            try:
+                track = user.playlist[lap_number]
+            except IndexError:
+                continue
+            else:
+                lap.append((user, track))
+        return lap
 
-    def _yield_none_switcher(self, switch: bool) -> None:
-        for user in self.user_queue:
-            user.yield_none_switcher(switch)
+    def get_lap_list_singer_track(self, lap_number):
+        text = ''
+        for index, (user, track) in enumerate(self.get_lap_queue(lap_number), start=1):
+            text += f"{index}) "
+
+
+    # def get_next_round(self):
+    #     while True:
+    #         round_queue = self._get_next_round_queue()
+    #
+    #         if not round_queue:  # либо конец очереди, либо треков вообще нет
+    #             # организовать удаление
+    #             self._yield_none_switcher(False)
+    #             round_queue = self._get_next_round_queue()  # проверяем ещё раз, если это был конец очереди
+    #             self._yield_none_switcher(True)
+    #         yield round_queue
+    #
+    # def _get_next_round_queue(self):
+    #     round_queue = []
+    #     for user in self.user_queue:
+    #         track = next(user.next_track_waited)
+    #         if track is not None:
+    #             round_queue.append((user, track))
+    #     return round_queue
+    #
+    # def _yield_none_switcher(self, switch: bool) -> None:
+    #     for user in self.user_queue:
+    #         user.yield_none_switcher(switch)
 
     def add_user_to_queue(self, user: KaraokeUser) -> None:
         if not isinstance(user, KaraokeUser):
@@ -48,6 +68,13 @@ class Karaoke:
         for user in self.user_queue:
             if all(getattr(user, attr) == value for attr, value in where.items()):
                 return user
+
+    def find_first_user_by_track(self, where: dict[str, Any]) -> Tuple[KaraokeUser, Track] | None:
+        # возвращает первое совпадение по условию
+        for user in self.user_queue:
+            track = user.find_first_match_track(where=where)
+            if track is not None:
+                return user, track
 
     def __str__(self) -> str:
         return f"Karaoke(name={self.name}, user_queue={list(self.user_queue)})"

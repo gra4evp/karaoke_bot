@@ -9,19 +9,19 @@ class KaraokeUser:
         self.id: int = aiogram_user.id
         self.aiogram_user = aiogram_user
         self.playlist: List[Track] = []
-        self.next_track_waited = self.get_next_track_with_status(TrackWaited)
-        self._switch_to_yield_none = True
-
-    def get_next_track_with_status(self, status: Type[TrackStatus]) -> Track:
-        while True:
-            for track in self.playlist:
-                if isinstance(track.status, status):
-                    yield track
-            while self._switch_to_yield_none:
-                yield None
-
-    def yield_none_switcher(self, switch: bool) -> None:
-        self._switch_to_yield_none = switch
+    #     self.next_track_waited = self.get_next_track_with_status(TrackWaited)
+    #     self._switch_to_yield_none = True
+    #
+    # def get_next_track_with_status(self, status: Type[TrackStatus]) -> Track:
+    #     while True:
+    #         for track in self.playlist:
+    #             if isinstance(track.status, status):
+    #                 yield track
+    #         while self._switch_to_yield_none:
+    #             yield None
+    #
+    # def yield_none_switcher(self, switch: bool) -> None:
+    #     self._switch_to_yield_none = switch
 
     def add_track_to_queue(self, track_url: str) -> None:
         if not isinstance(track_url, str):
@@ -40,7 +40,7 @@ class KaraokeUser:
         if 'xminus.me' in track_url:
             return XMinusTrack(track_url)
 
-    def find_first_match_track(self, where: dict[str, Any]) -> Track:
+    def find_first_match_track(self, where: dict[str, Any]) -> Track | None:
         # возвращает первое совпадение по условию
         for track in self.playlist:
             if all(getattr(track, attr) == value for attr, value in where.items()):
