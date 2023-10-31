@@ -66,8 +66,8 @@ async def get_lap_queue_command(message: types.Message, state: FSMContext):
 async def get_lap_queue_command_message(message: types.Message, laps: int):
     if laps:
         keyboard = InlineKeyboardMarkup()
-        for i in range(laps):
-            keyboard.insert(InlineKeyboardButton(text=f'{i + 1}', callback_data=f'lap_queue lap {i}'))
+        for lap_index in range(laps):
+            keyboard.insert(InlineKeyboardButton(text=f'{lap_index + 1}', callback_data=f'lap_queue lap {lap_index}'))
         await message.answer('Select a lap tracks', reply_markup=keyboard, parse_mode='HTML')
     else:
         await message.answer('There are no tracks ordered at the moment')
@@ -83,9 +83,9 @@ async def callback_get_lap_queue_command(callback: types.CallbackQuery, state: F
     keyboard = InlineKeyboardMarkup()
     callback_data = callback.data.split(' ')[1:]
     match callback_data:
-        case ['lap', lap_number]:
-            lap_queue = karaoke.get_lap_queue(int(lap_number))
-            text = ''
+        case ['lap', lap_index]:
+            lap_queue = karaoke.get_lap_queue(int(lap_index))
+            text = f'Lap {int(lap_index) + 1}\n\n'
             for track_number, (user, track) in enumerate(lap_queue, start=1):
                 name = user.aiogram_user.first_name
                 username = user.aiogram_user.username
@@ -93,7 +93,7 @@ async def callback_get_lap_queue_command(callback: types.CallbackQuery, state: F
                     name = hlink(name, f'https://t.me/{username}')
                 text += f"{track_number}) Visitor: {name}\n{' '*len(str(track_number))}   Link: {hlink('link_to_track', track.url)}\n"
 
-                keyboard.insert(InlineKeyboardButton('1', callback_data=f'lap_queue track {lap_number} {track_number} {track.id}'))
+                keyboard.insert(InlineKeyboardButton('1', callback_data=f'lap_queue track {lap_index} {track_number} {track.id}'))
 
             keyboard.add(InlineKeyboardButton('<< Back', callback_data='lap_queue back_to laps'))
             await callback.message.edit_text(
@@ -107,37 +107,44 @@ async def callback_get_lap_queue_command(callback: types.CallbackQuery, state: F
             await callback.message.delete()
             await get_lap_queue_command_message(message=callback.message, laps=karaoke.how_many_laps())
 
-        case ['track', lap_number, track_number, track_id]:
+        case ['track', lap_index, track_number, track_id]:
             user_by_track = karaoke.find_first_user_by_track(where={'id': int(track_id)})
             if user_by_track is not None:
                 user, track = user_by_track
 
                 name = user.aiogram_user.first_name
-                text = f"{track_number}) Visitor: {name}   Link: {hlink('link_to_track', track.url)}\n"
+                text = f"Lap {int(lap_index) + 1}\n\n{track_number}) Visitor: {name}   Link: {hlink('link_to_track', track.url)}\n"
 
                 keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                 keyboard.insert(InlineKeyboardButton(
                     text="❌ Remove from queue",
-                    callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {track.id}')
+                    callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {lap_index} {track.id}')
                 )
-                keyboard.add(InlineKeyboardButton('<< Back to lap', callback_data=f'lap_queue lap {lap_number}'))
+                keyboard.add(InlineKeyboardButton('<< Back to lap', callback_data=f'lap_queue lap {lap_index}'))
                 await callback.message.edit_text(text, reply_markup=keyboard, parse_mode='HTML')
 
 
 async def callback_remove_from_queue(callback: types.CallbackQuery):
     await callback.answer()
-    karaoke_name, user_id, track_id = callback.data.replace('rm_from_queue ', '').split(' ')
+    karaoke_name, user_id, lap_number, track_id = callback.data.replace('rm_from_queue ', '').split(' ')
 
     karaoke = find_first_match_karaoke(ready_to_play_karaoke_list, where={'owner_id': callback.from_user.id})
     if karaoke is not None:
         user = karaoke.find_first_match_user(where={'id': int(user_id)})
         if user is not None:
             track = user.find_first_match_track(where={'id': int(track_id)})
-            track.remove()
-            await callback.message.edit_text(callback.message.text + f"\nTrack status: ❌ Removed", parse_mode='HTML')
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton(text="Restore 🔧", callback_data='set_to_perform'))
-            await callback.message.edit_reply_markup(keyboard)
+            if track is not None:
+                track.remove()
+
+                text = callback.message.html_text + f"\nTrack status: ❌ Removed"
+                await callback.message.edit_text(text, parse_mode='HTML')
+                keyboard = InlineKeyboardMarkup()
+                keyboard.add(InlineKeyboardButton(
+                    text="Restore 🔧",
+                    callback_data=f'restore track {karaoke_name} {user_id} {track_id}')
+                )
+                keyboard.add(InlineKeyboardButton('<< Back to lap', callback_data=f'lap_queue lap {lap_number}'))
+                await callback.message.edit_reply_markup(keyboard)
 
 
 def register_handlers(dispatcher: Dispatcher):
