@@ -23,14 +23,9 @@ class Karaoke:
             except IndexError:
                 continue
             else:
-                lap.append((user, track))
+                if isinstance(track.status, TrackWaited):
+                    lap.append((user, track))
         return lap
-
-    def get_lap_list_singer_track(self, lap_number):
-        text = ''
-        for index, (user, track) in enumerate(self.get_lap_queue(lap_number), start=1):
-            text += f"{index}) "
-
 
     # def get_next_round(self):
     #     while True:
