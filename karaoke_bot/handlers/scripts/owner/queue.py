@@ -46,6 +46,8 @@ async def get_lap_queue_command(message: types.Message, state: FSMContext):
             data['karaoke_name'] = karaoke.name
 
         await get_lap_queue_command_message(message, laps=karaoke.how_many_laps())
+    else:
+        await message.answer("You haven't created any karaoke yet")
 
     #     for user, track in next(karaoke.next_round):
     #         track_number = 1
@@ -85,15 +87,20 @@ async def callback_get_lap_queue_command(callback: types.CallbackQuery, state: F
     match callback_data:
         case ['lap', lap_index]:
             lap_queue = karaoke.get_lap_queue(int(lap_index))
-            text = f'Lap {int(lap_index) + 1}\n\n'
+            text = f'<b>LAP {int(lap_index) + 1}</b>\n\n'
             for track_number, (user, track) in enumerate(lap_queue, start=1):
                 name = user.aiogram_user.first_name
                 username = user.aiogram_user.username
                 if username is not None:
                     name = hlink(name, f'https://t.me/{username}')
-                text += f"{track_number}) Visitor: {name}\n{' '*len(str(track_number))}   Link: {hlink('link_to_track', track.url)}\n"
+                text += f"<b>TRACK {track_number}</b>\n" \
+                        f"Visitor name: {name}\n" \
+                        f"Link: {hlink('link_to_track', track.url)}\n\n"
 
-                keyboard.insert(InlineKeyboardButton('1', callback_data=f'lap_queue track {lap_index} {track_number} {track.id}'))
+                keyboard.insert(InlineKeyboardButton(
+                    f"{track_number}",
+                    callback_data=f'lap_queue track {lap_index} {track_number} {track.id}')
+                )
 
             keyboard.add(InlineKeyboardButton('<< Back', callback_data='lap_queue back_to laps'))
             await callback.message.edit_text(
@@ -113,7 +120,9 @@ async def callback_get_lap_queue_command(callback: types.CallbackQuery, state: F
                 user, track = user_by_track
 
                 name = user.aiogram_user.first_name
-                text = f"Lap {int(lap_index) + 1}\n\n{track_number}) Visitor: {name}   Link: {hlink('link_to_track', track.url)}\n"
+                text = f"<b>LAP {int(lap_index) + 1}   TRACK {track_number}</b>\n" \
+                       f"Visitor name: {name}\n" \
+                       f"Link: {hlink('link_to_track', track.url)}"
 
                 keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                 keyboard.insert(InlineKeyboardButton(
@@ -132,19 +141,17 @@ async def callback_remove_from_queue(callback: types.CallbackQuery):
     if karaoke is not None:
         user = karaoke.find_first_match_user(where={'id': int(user_id)})
         if user is not None:
-            track = user.find_first_match_track(where={'id': int(track_id)})
-            if track is not None:
-                track.remove()
+            user.remove_track(track_id=int(track_id))
 
-                text = callback.message.html_text + f"\nTrack status: ❌ Removed"
-                await callback.message.edit_text(text, parse_mode='HTML')
-                keyboard = InlineKeyboardMarkup()
-                keyboard.add(InlineKeyboardButton(
-                    text="Restore 🔧",
-                    callback_data=f'restore track {karaoke_name} {user_id} {track_id}')
-                )
-                keyboard.add(InlineKeyboardButton('<< Back to lap', callback_data=f'lap_queue lap {lap_number}'))
-                await callback.message.edit_reply_markup(keyboard)
+            text = callback.message.html_text + f"\nTrack status: ❌ Removed"
+            await callback.message.edit_text(text, parse_mode='HTML')
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(
+                text="Restore 🔧",
+                callback_data=f'restore track {karaoke_name} {user_id} {track_id}')
+            )
+            keyboard.add(InlineKeyboardButton('<< Back to lap', callback_data=f'lap_queue lap {lap_number}'))
+            await callback.message.edit_reply_markup(keyboard)
 
 
 def register_handlers(dispatcher: Dispatcher):
