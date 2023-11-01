@@ -9,6 +9,7 @@ class KaraokeUser:
         self.id: int = aiogram_user.id
         self.aiogram_user = aiogram_user
         self.playlist: List[Track] = []
+        self.removed_tracks: List[Track] = []
     #     self.next_track_waited = self.get_next_track_with_status(TrackWaited)
     #     self._switch_to_yield_none = True
     #
@@ -22,6 +23,13 @@ class KaraokeUser:
     #
     # def yield_none_switcher(self, switch: bool) -> None:
     #     self._switch_to_yield_none = switch
+
+    def remove_track(self, track_id: int):
+        track = self.find_first_match_track(where={'id': track_id})
+        if track is not None:
+            track.remove()
+            self.playlist.remove(track)
+            self.removed_tracks.append(track)
 
     def add_track_to_queue(self, track_url: str) -> None:
         if not isinstance(track_url, str):
