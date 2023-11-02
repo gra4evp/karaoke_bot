@@ -50,33 +50,21 @@ class SQLAlchemyRepository:
         data = {}
         for attr, sub_attrs in search_attrs.items():
             if hasattr(model, attr):
-                attr_value = getattr(model, attr)
-                # print(f"{attr}, type(value) - {type(attr_value)}")
-                if not sub_attrs:  # Если словарь с податрибуттами пустой
-                    data[attr] = attr_value
-                elif isinstance(attr_value, list | set):
-                    data[attr] = [self._recursive_get_attr(item, sub_attrs) for item in attr_value]
-                else:
-                    data[attr] = self._recursive_get_attr(attr_value, sub_attrs)
-                # print(data)
-        return data
+                attr_obj = getattr(model, attr)
 
-    # search_attr = {
-    #     'attr1': {
-    #         'subattr1': {},
-    #         'subattr2': {}
-    #     },
-    #     'attr2': {},
-    #     'attr3': {
-    #         'subattr1': {},
-    #         'subattr2': {},
-    #         'subattr3': {
-    #             'subsubattr1': {},
-    #             'subsubattr2': {}
-    #         },
-    #         'subattr4': {}
-    #     },
-    # }
+                if not sub_attrs:  # Если словарь с податрибуттами пустой
+                    data[attr] = attr_obj
+                elif isinstance(attr_obj, list | set):
+                    if 'field_name' in sub_attrs and 'func' in sub_attrs:
+                        field_name = sub_attrs['field_name']
+                        func = sub_attrs['func']
+                        data[field_name] = func(attr_obj)
+                    else:
+                        data[attr] = [self._recursive_get_attr(item, sub_attrs) for item in attr_obj]
+                else:
+                    data[attr] = self._recursive_get_attr(attr_obj, sub_attrs)
+
+        return data
 
     # def add(self, obj: T) -> int:
     #     """Add object to the repository and return the id of the object."""

@@ -16,32 +16,36 @@ import json
 async def menu_command(message: types.Message, state: FSMContext):
     await state.finish()
 
-    # data = Repository.get(
-    #     lookup_table_name='telegram_profiles',
-    #     filter_by={'id': message.from_user.id},
-    #     model_attr=[
-    #         'account',
-    #         'visitor'
-    #     ],
-    #     search_attr={
-    #         'karaokes': {
-    #             'name': {},
-    #             'owner': {
-    #                 'account': {
-    #                     'telegram_profile': {
-    #                         'id': {},
-    #                         'username': {}
-    #                     }
-    #                 }
-    #             },
-    #             'is_active': {},
-    #             'avatar_id': {},
-    #             'description': {}
-    #
-    #         }
-    #     }
-    # )
-    # print(json.dumps(data, indent=4, ensure_ascii=False))
+    data = Repository.get(
+        lookup_table_name='telegram_profiles',
+        filter_by={'id': message.from_user.id},
+        model_attr=[
+            'account',
+            'visitor'
+        ],
+        search_attr={
+            'karaokes': {
+                'name': {},
+                'owner': {
+                    'account': {
+                        'telegram_profile': {
+                            'id': {},
+                            'username': {}
+                        }
+                    }
+                },
+                'is_active': {},
+                'avatar_id': {},
+                'description': {},
+                'subscribers': {
+                    'field_name': 'subscribers_amount',
+                    'func': len
+                }
+
+            }
+        }
+    )
+    print(json.dumps(data, indent=4, ensure_ascii=False))
 
     try:
         is_visitor, is_owner, is_moderator, is_administrator = get_account_roles(message.from_user.id)
