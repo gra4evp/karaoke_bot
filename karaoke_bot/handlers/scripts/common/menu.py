@@ -9,10 +9,39 @@ from karaoke_bot.models.sqlalchemy_data_utils import get_account_roles, get_visi
     get_visitor_karaokes_data
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, EmptyFieldError
 from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.repository.sqlalchemy_repository import Repository
+import json
 
 
 async def menu_command(message: types.Message, state: FSMContext):
     await state.finish()
+
+    # data = Repository.get(
+    #     lookup_table_name='telegram_profiles',
+    #     filter_by={'id': message.from_user.id},
+    #     model_attr=[
+    #         'account',
+    #         'visitor'
+    #     ],
+    #     search_attr={
+    #         'karaokes': {
+    #             'name': {},
+    #             'owner': {
+    #                 'account': {
+    #                     'telegram_profile': {
+    #                         'id': {},
+    #                         'username': {}
+    #                     }
+    #                 }
+    #             },
+    #             'is_active': {},
+    #             'avatar_id': {},
+    #             'description': {}
+    #
+    #         }
+    #     }
+    # )
+    # print(json.dumps(data, indent=4, ensure_ascii=False))
 
     try:
         is_visitor, is_owner, is_moderator, is_administrator = get_account_roles(message.from_user.id)
