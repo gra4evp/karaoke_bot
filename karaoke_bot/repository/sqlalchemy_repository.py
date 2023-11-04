@@ -66,13 +66,51 @@ class SQLAlchemyRepository:
 
         return data
 
-    # def add(self, obj: T) -> int:
-    #     """Add object to the repository and return the id of the object."""
-    #     session = self.Session()
-    #     session.add(obj)
-    #     session.commit()
-    #     session.refresh(obj)
-    #     return obj.id
+    # example
+
+    # data = Repository.get(
+    #     lookup_table_name='telegram_profiles',
+    #     filter_by={'id': message.from_user.id},
+    #     model_attr=[
+    #         'account',
+    #         'visitor'
+    #     ],
+    #     search_attr={
+    #         'karaokes': {
+    #             'name': {},
+    #             'owner': {
+    #                 'account': {
+    #                     'telegram_profile': {
+    #                         'id': {},
+    #                         'username': {}
+    #                     }
+    #                 }
+    #             },
+    #             'is_active': {},
+    #             'avatar_id': {},
+    #             'description': {},
+    #             'subscribers': {
+    #                 'field_name': 'subscribers_amount',
+    #                 'func': len
+    #             }
+    #
+    #         }
+    #     }
+    # )
+
+    # def add(self, record_table_name: str, filter_by: dict, model_attr: list[str], search_attr: dict) -> None:
+    #     model_orm = self.table_name2model.get(record_table_name)
+    #     if model_orm is None:
+    #         raise KeyError(f'Не существует ORM модели с именем {record_table_name}')
+    #
+    #     with AlchemySession() as session:
+    #         model = session.query(model_orm).filter_by(**filter_by).first()
+    #
+    #         if model is not None:
+    #             for attr in model_attr:  # спускаемся по зависимостям и ищем нужную ORM модель
+    #                 model = getattr(model, attr)
+    #                 if model is None:
+    #                     raise EmptyFieldError(table_name=attr.upper(), field_name=attr)
 
     #
     # def get_all(self, where: dict[str, Any] | None = None) -> list[T]:

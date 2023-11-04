@@ -183,7 +183,6 @@ def add_performance_to_visitor(telegram_id: int, track_url: str):
             if visitor is not None:
                 selected_karaoke: Karaoke = visitor.selected_karaoke
                 if selected_karaoke is not None:
-                    print(selected_karaoke.session.id)
                     session.add(
                         VisitorPerformance(
                             visitor_id=visitor.account_id,
