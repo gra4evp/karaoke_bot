@@ -4,7 +4,7 @@ from aiogram.dispatcher import FSMContext
 from karaoke_bot.states.visitor_states import KaraokeSearch
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_karaoke_data_by_name
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError

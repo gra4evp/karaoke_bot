@@ -8,7 +8,7 @@ from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_p
 from karaoke_bot.models.sqlalchemy_data_utils import get_account_roles, get_visitor_karaoke_names, \
     get_visitor_karaokes_data
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, EmptyFieldError
-from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 from karaoke_bot.repository.sqlalchemy_repository import Repository
 import json
 

@@ -7,7 +7,7 @@ from string import ascii_letters, digits
 
 from karaoke_bot.create_bot import bot
 from karaoke_bot.states.owner_states import NewKaraoke
-from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
 from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
