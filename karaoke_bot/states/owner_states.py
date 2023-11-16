@@ -14,3 +14,7 @@ class NewKaraoke(StatesGroup):
 
 class LapQueue(StatesGroup):
     pass
+
+
+class QRCode(StatesGroup):
+    text = State()
