@@ -16,6 +16,18 @@ async def register_telegram_user(user: types.User):
 
 
 async def start_command(message: types.Message):
+    args = message.get_args()
+    if args is not None or args != '':
+
+        args = args.split('-')
+
+        parameters = {}
+        for arg in args:
+            key, value = arg.split('=')
+            parameters[key] = value
+
+        print(parameters)
+
     await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
     await register_telegram_user(message.from_user)
 
