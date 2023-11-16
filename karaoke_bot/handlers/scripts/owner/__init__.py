@@ -1,1 +1,1 @@
-from . import new_karaoke, queue
+from . import new_karaoke, queue, generate_qr_code
