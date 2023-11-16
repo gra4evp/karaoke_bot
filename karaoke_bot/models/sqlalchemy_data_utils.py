@@ -110,10 +110,35 @@ def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
             raise TelegramProfileNotFoundError(telegram_id)
 
 
-def find_karaoke(karaoke_name: str) -> Karaoke | None:
+def get_karaoke_data_by_name(karaoke_name: str, user_id: int) -> dict:
     with AlchemySession() as session:
         karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
-    return karaoke
+        if karaoke is not None:
+            avatar_id = karaoke.avatar_id
+            description = karaoke.description
+            owner_username = karaoke.owner.account.telegram_profile.username
+            subscribers = karaoke.subscribers
+
+            is_subscribed = False
+            for visitor in subscribers:
+                if user_id == visitor.account.telegram_profile.id:
+                    is_subscribed = True
+                    break
+
+            data = {
+                'avatar_id': avatar_id,
+                'description': description,
+                'owner': {
+                    'username': owner_username
+                },
+                'subscribers': {
+                    'amount': len(subscribers),
+                    'is_subscribed': is_subscribed
+                }
+            }
+            return data
+
+        raise KaraokeNotFoundError(karaoke_name=karaoke_name)
 
 
 def get_selected_karaoke_data(telegram_id: int) -> tuple:

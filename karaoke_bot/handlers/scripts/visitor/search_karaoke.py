@@ -5,7 +5,7 @@ from karaoke_bot.states.visitor_states import KaraokeSearch
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from karaoke_bot.handlers.scripts.common.other import register_telegram_user
-from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke
+from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_karaoke_data_by_name
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
@@ -24,49 +24,89 @@ async def callback_search_karaoke_command(callback: types.CallbackQuery):
 
 
 async def search_karaoke(message: types.Message, state: FSMContext):
-    with AlchemySession() as session:
-        karaoke = session.query(Karaoke).filter_by(name=message.text).first()
 
-        if karaoke is not None:  # если есть такое караоке
-            avatar_id = karaoke.avatar_id
-            description = karaoke.description
-            owner_username = karaoke.owner.account.telegram_profile.username
-            subscribers = karaoke.subscribers
+    karaoke_name = message.text
+    try:
+        karaoke_data = get_karaoke_data_by_name(karaoke_name=karaoke_name, user_id=message.from_user.id)
+    except KaraokeNotFoundError as e:
+        print(f"ERROR OCCURRED: {e.args}")
+        await message.reply(
+            "Oops, there is no such karaoke yet.\n\n"
+            "Try to get the <b>NAME</b> from the administrator of the institution where you are.",
+            parse_mode='HTML'
+        )
+    else:
+        caption = f"<b>Karaoke</b>: {karaoke_name}\n" \
+                  f"<b>Owner</b>: @{karaoke_data['owner']['username']}\n" \
+                  f"<b>Subscribers</b>: {karaoke_data['subscribers']['amount']}\n\n"
 
-            caption = f"<b>Karaoke</b>: {karaoke.name}\n" \
-                      f"<b>Owner</b>: @{owner_username}\n" \
-                      f"<b>Subscribers</b>: {format_subscribers_count(len(subscribers))}\n\n"
+        if karaoke_data['description'] is not None:
+            caption += karaoke_data['description']
 
-            if description is not None:
-                caption += description
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
 
+        if karaoke_data['subscribers']['is_subscribed']:
             keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke.name}"))
+            keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
+            caption += "\n\n✅ You have already subscribed!"
 
-            for visitor in subscribers:
-                if message.from_user.id == visitor.account.telegram_profile.id:
-                    keyboard = InlineKeyboardMarkup()
-                    keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
-                    caption += "\n\n✅ You have already subscribed!"
-                    break
-
-            if avatar_id is not None:
-                await bot.send_photo(
-                    chat_id=message.from_user.id,
-                    photo=avatar_id,
-                    caption=caption,
-                    reply_markup=keyboard,
-                    parse_mode='HTML'
-                )
-            else:
-                await message.answer(caption, reply_markup=keyboard, parse_mode='HTML')
-            await state.finish()
-        else:
-            await message.reply(
-                "Oops, there is no such karaoke yet.\n\n"
-                "Try to get the <b>NAME</b> from the administrator of the institution where you are.",
+        if karaoke_data['avatar_id'] is not None:
+            await bot.send_photo(
+                chat_id=message.from_user.id,
+                photo=karaoke_data['avatar_id'],
+                caption=caption,
+                reply_markup=keyboard,
                 parse_mode='HTML'
             )
+        else:
+            await message.answer(caption, reply_markup=keyboard, parse_mode='HTML')
+        await state.finish()
+
+
+    # with AlchemySession() as session:
+    #     karaoke = session.query(Karaoke).filter_by(name=message.text).first()
+    #
+    #     if karaoke is not None:  # если есть такое караоке
+    #         avatar_id = karaoke.avatar_id
+    #         description = karaoke.description
+    #         owner_username = karaoke.owner.account.telegram_profile.username
+    #         subscribers = karaoke.subscribers
+    #
+    #         caption = f"<b>Karaoke</b>: {karaoke.name}\n" \
+    #                   f"<b>Owner</b>: @{owner_username}\n" \
+    #                   f"<b>Subscribers</b>: {format_subscribers_count(len(subscribers))}\n\n"
+    #
+    #         if description is not None:
+    #             caption += description
+    #
+    #         keyboard = InlineKeyboardMarkup()
+    #         keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke.name}"))
+    #
+    #         for visitor in subscribers:
+    #             if message.from_user.id == visitor.account.telegram_profile.id:
+    #                 keyboard = InlineKeyboardMarkup()
+    #                 keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
+    #                 caption += "\n\n✅ You have already subscribed!"
+    #                 break
+    #
+    #         if avatar_id is not None:
+    #             await bot.send_photo(
+    #                 chat_id=message.from_user.id,
+    #                 photo=avatar_id,
+    #                 caption=caption,
+    #                 reply_markup=keyboard,
+    #                 parse_mode='HTML'
+    #             )
+    #         else:
+    #             await message.answer(caption, reply_markup=keyboard, parse_mode='HTML')
+    #         await state.finish()
+    #     else:
+    #         await message.reply(
+    #             "Oops, there is no such karaoke yet.\n\n"
+    #             "Try to get the <b>NAME</b> from the administrator of the institution where you are.",
+    #             parse_mode='HTML'
+    #         )
 
 
 async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FSMContext):
