@@ -89,4 +89,3 @@ if __name__ == '__main__':
         print(f"FFT для файла {filename} выполнено за {execution_time} секунд")
         plt.show()
         # break
-
