@@ -3,7 +3,7 @@ from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Accou
 from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, InvalidAccountStateError,\
     EmptyFieldError
 from aiogram import types
-from typing import List
+from typing import List, Set
 
 
 def create_or_update_telegram_profile(user: types.User) -> None:
@@ -270,5 +270,31 @@ def get_visitor_karaokes_data(telegram_id: int) -> dict[str]:
                 raise EmptyFieldError('Visitor', 'karaokes')
 
             raise InvalidAccountStateError(account_id=account.id, state='visitor')
+
+        raise TelegramProfileNotFoundError(telegram_id=telegram_id)
+
+
+def get_owner_karaokes_data(telegram_id: int) -> dict[str]:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            owner: Owner = account.owner
+            if owner is not None:
+                karaokes: Set[Karaoke] = owner.karaokes
+                if karaokes is not None:
+                    data = {}
+                    for karaoke in karaokes:
+                        data[karaoke.name] = {
+                            'is_active': karaoke.is_active,
+                            'subscribers_amount': len(karaoke.subscribers),
+                            'avatar_id': karaoke.avatar_id,
+                            'description': karaoke.description
+                        }
+                    return data
+
+                raise EmptyFieldError('Owner', 'karaokes')
+
+            raise InvalidAccountStateError(account_id=account.id, state='owner')
 
         raise TelegramProfileNotFoundError(telegram_id=telegram_id)
