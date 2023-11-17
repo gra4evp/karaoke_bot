@@ -6,27 +6,27 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from karaoke_bot.config import START_TEXT
 # from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
+from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 
 
-async def register_telegram_user(user: types.User):
-    try:
-        create_or_update_telegram_profile(user)
-    except Exception as e:
-        print(f"Error occurred: {e}")
-
-
-async def start_command(message: types.Message):
+async def start_command(message: types.Message, state: FSMContext):
     args = message.get_args()
-    if args is not None or args != '':
+    if args is not None or args != '':  # если команда /start получена по внешней ссылке через QR code
 
-        args = args.split('-')
+        args = args.split('-')  # смотри delimeter внутри owner.generate_qr_code
 
         parameters = {}
         for arg in args:
             key, value = arg.split('=')
             parameters[key] = value
 
-        print(parameters)
+        match parameters.get('func'):
+            case 'search_karaoke':
+                karaoke_name = parameters.get('karaoke_name')
+                if karaoke_name is not None:
+                    message.text = karaoke_name
+                    await search_karaoke(message=message, state=state)
 
     await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
     await register_telegram_user(message.from_user)
