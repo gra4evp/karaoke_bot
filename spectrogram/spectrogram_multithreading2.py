@@ -4,6 +4,7 @@ import numpy as np
 import os
 import time
 import threading
+from queue import Queue
 
 
 def get_audio_sample(audio, sr, start, duration):
@@ -30,29 +31,62 @@ def get_spectrogram_pair(
     return spec1, spec2
 
 
-def process_files(filenames, folder_path, pairs, lock):
-    while filenames:
-        with lock:
-            filename = filenames.pop(0)  # Извлекаем первый файл из списка
+def get_wav_spectrograms(file_path: str, pairs: int):
+    y, sr = librosa.load(file_path, sr=44100, mono=True)
+    wav_specrtograms = []
+    for i in range(pairs):
+        start = 30 + i * 5
+        sp1, sp2 = get_spectrogram_pair(audio=y, sr=sr, start=start, duration=20, overlap=5)
+        wav_specrtograms.append(sp1)
+        wav_specrtograms.append(sp2)
 
-        y, sr = librosa.load(os.path.join(folder_path, filename), sr=44100, mono=True)
-        for i in range(pairs):
-            start = 30 + i * 5
-            sp1, sp2 = get_spectrogram_pair(audio=y, sr=sr, start=start, duration=20, overlap=5)
+    return wav_specrtograms
+
+
+def process_files(
+        filenames: list,
+        folder_path: str,
+        lock,
+        result_queue: Queue,
+        processed_files_counter: list[int],
+        max_files: int):
+
+    while True:
+        with lock:  # блокируем мьютекс
+            if not filenames or processed_files_counter[0] >= max_files:
+                break
+            filename = filenames.pop(0)
+
+        wav_spectrograms = get_wav_spectrograms(file_path=os.path.join(folder_path, filename), pairs=8)
+        result_queue.put(wav_spectrograms, block=True)
+        print('я работаю')
 
 
 if __name__ == '__main__':
     folder_path = r'D:\PROGRAMMS\PYTHON_PROJECTS\youtube_parse\tracks_wav'
     filenames = os.listdir(folder_path)
-    number_sample_pairs = 8
-    workers = 4  # Задайте желаемое количество потоков
+
+    workers = 8  # Желаемое количество потоков
+    processed_files_counter = [0]  # Счетчик обработанных файлов
+    max_files_to_process = 10  # Максимальное количество файлов для обработки
 
     start_time = time.time()
+    result_queue = Queue()
     lock = threading.Lock()  # Создаем мьютекс
 
     threads = []
     for _ in range(workers):
-        thread = threading.Thread(target=process_files, args=(filenames, folder_path, number_sample_pairs, lock))
+        thread = threading.Thread(
+            target=process_files,
+            args=(
+                filenames,
+                folder_path,
+                lock,
+                result_queue,
+                processed_files_counter,
+                max_files_to_process
+            )
+        )
         threads.append(thread)
         thread.start()
 
@@ -61,3 +95,4 @@ if __name__ == '__main__':
 
     execution_time = time.time() - start_time
     print(f"Processing completed in {execution_time} seconds")
+

@@ -67,8 +67,8 @@ if __name__ == '__main__':
     filenames = os.listdir(folder_path)
     number_sample_pairs = 8
 
+    start_time = time.time()
     for filename in filenames[:10]:  # оценим производительность на первых 10 файлах
-        start_time = time.time()
 
         y, sr = librosa.load(os.path.join(folder_path, filename), sr=44100, mono=True)
         for i in range(number_sample_pairs):
@@ -84,8 +84,8 @@ if __name__ == '__main__':
             # librosa.display.specshow(librosa.amplitude_to_db(np.abs(sp2), ref=np.max), sr=sr, y_axis='log', x_axis='time')
             # plt.colorbar(format='%+2.0f dB')
             # plt.title(f'sample{(i + 1)*2}')
-
-        execution_time = time.time() - start_time
-        print(f"FFT для файла {filename} выполнено за {execution_time} секунд")
-        plt.show()
+        # plt.show()
         # break
+    execution_time = time.time() - start_time
+    print(f"Выполнено за {execution_time} секунд")
+
