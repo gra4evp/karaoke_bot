@@ -11,6 +11,7 @@ from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundErro
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 from karaoke_bot.handlers.utils import format_subscribers_count
 from .order_track import order_track_command
+from karaoke_bot.states import owner_states, visitor_states
 
 
 async def search_karaoke_command(message: types.Message):
@@ -36,20 +37,21 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             parse_mode='HTML'
         )
     else:
+        subscribers_amount = karaoke_data['subscribers']['amount']
         caption = f"<b>Karaoke</b>: {karaoke_name}\n" \
                   f"<b>Owner</b>: @{karaoke_data['owner']['username']}\n" \
-                  f"<b>Subscribers</b>: {karaoke_data['subscribers']['amount']}\n\n"
+                  f"<b>Subscribers</b>: {format_subscribers_count(subscribers_amount)}\n\n"
 
         if karaoke_data['description'] is not None:
             caption += karaoke_data['description']
 
         keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
-
         if karaoke_data['subscribers']['is_subscribed']:
             keyboard = InlineKeyboardMarkup()
             keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
             caption += "\n\n✅ You have already subscribed!"
+        else:
+            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
 
         if karaoke_data['avatar_id'] is not None:
             await bot.send_photo(
@@ -61,7 +63,6 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             )
         else:
             await message.answer(caption, reply_markup=keyboard, parse_mode='HTML')
-        await state.finish()
 
 
 async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FSMContext):
@@ -80,11 +81,19 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         print(f"ERROR OCCURRED: {e.args}")
         await callback.message.answer(text=e.args[0])
     else:
-        await callback.message.answer("✅ Success! You have subscribed!")
+        await callback.answer("✅ Success! You have subscribed!", show_alert=True)
 
-        # TODO пофиксить баг, с тем что после поиска /search_karaoke мы попадаем сразу в /order_track (примемлимо если сразу нажато было /order_track)
-        # current_state = await state.get_state()
-        await order_track_command(callback.message, state, callback.from_user.id)
+        current_state = await state.get_state()
+        match current_state:
+            case owner_states.NewKaraoke.new_karaoke.state:
+                await state.finish()
+                keyboard = InlineKeyboardMarkup()
+                keyboard.insert(InlineKeyboardButton('Order a track', callback_data='order_track'))
+                keyboard.insert(InlineKeyboardButton('Get QR-code', callback_data=f'get_qr_code {karaoke_name}'))
+                await callback.message.edit_reply_markup(reply_markup=keyboard)
+
+            case _:
+                await order_track_command(callback.message, state, callback.from_user.id)
 
 
 def register_handlers(dp: Dispatcher):
@@ -95,4 +104,4 @@ def register_handlers(dp: Dispatcher):
 
     dp.register_message_handler(search_karaoke, state=KaraokeSearch.name)
 
-    dp.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'))
+    dp.register_callback_query_handler(callback_subscribe_to_karaoke, Text(startswith='subscribe_to'), state='*')

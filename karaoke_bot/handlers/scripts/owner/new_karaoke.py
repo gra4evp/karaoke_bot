@@ -147,7 +147,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
 
             async with state.proxy() as data:
                 message_karaoke_name: types.message = data.get('message_karaoke_name')
-
+            await state.set_state(NewKaraoke.new_karaoke)
             await register_karaoke(state)  # внутри функции state.finish(), обращаться к state.proxy() нужно заранее
             await search_karaoke(message=message_karaoke_name, state=state)
         case ('edit',):
@@ -211,8 +211,6 @@ async def register_karaoke(state: FSMContext):
         await bot.send_message(chat_id=owner.id, text=fail_text)
     else:
         await bot.send_message(chat_id=owner.id, text=success_text, parse_mode='HTML')
-    finally:
-        await state.finish()
 
 
 def register_handlers(dp: Dispatcher):
