@@ -15,7 +15,7 @@ async def start_command(message: types.Message, state: FSMContext):
     await register_telegram_user(message.from_user)
 
     args = message.get_args()
-    if args is not None or args != '':  # если команда /start получена по внешней ссылке через QR code
+    if args is not None and args != '':  # если команда /start получена по внешней ссылке через QR code
 
         args = args.split('-')  # смотри delimeter внутри owner.generate_qr_code
 
