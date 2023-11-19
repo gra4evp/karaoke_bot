@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from karaoke_bot.keyboards import other_keyboard
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.config import START_TEXT
+from karaoke_bot.config import HELLO_TEXT, START_TEXT
 # from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
@@ -11,6 +11,9 @@ from karaoke_bot.handlers.scripts.common.register_telegram_user import register_
 
 
 async def start_command(message: types.Message, state: FSMContext):
+
+    await register_telegram_user(message.from_user)
+
     args = message.get_args()
     if args is not None or args != '':  # если команда /start получена по внешней ссылке через QR code
 
@@ -26,10 +29,10 @@ async def start_command(message: types.Message, state: FSMContext):
                 karaoke_name = parameters.get('karaoke_name')
                 if karaoke_name is not None:
                     message.text = karaoke_name
+                    await message.answer(HELLO_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
                     await search_karaoke(message=message, state=state)
-
-    await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
-    await register_telegram_user(message.from_user)
+    else:
+        await message.answer(START_TEXT, reply_markup=other_keyboard, parse_mode='HTML')
 
 
 async def cancel_command(message: types.Message, state: FSMContext):
