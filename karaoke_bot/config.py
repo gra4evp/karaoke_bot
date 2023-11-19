@@ -1,5 +1,10 @@
 API_TOKEN = '6034894546:AAGSXsLR8QgLh9Qjzi1lSRXR_jfjX7CXyfA'
 
+HELLO_TEXT = '''
+Hello, I'm <b>Moloko</b> - karaoke bot.
+I can help you create and manage virtual karaoke and order tracks to your karaoke-man (person responsible for turning on the music).
+'''
+
 START_TEXT = '''
 Hello, I'm <b>Moloko</b> - karaoke bot.
 I can help you create and manage virtual karaoke and order tracks to your karaoke-man (person responsible for turning on the music).
