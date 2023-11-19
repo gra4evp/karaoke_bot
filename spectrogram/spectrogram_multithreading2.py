@@ -54,19 +54,22 @@ def process_files(
     while True:
         with lock:  # блокируем мьютекс
             if not filenames or processed_files_counter[0] >= max_files:
+                print('попали в брейк')
                 break
             filename = filenames.pop(0)
+            processed_files_counter[0] += 1
 
+        print('я начинаю обработку')
         wav_spectrograms = get_wav_spectrograms(file_path=os.path.join(folder_path, filename), pairs=8)
         result_queue.put(wav_spectrograms, block=True)
-        print('я работаю')
+        print('я закончил обработку')
 
 
 if __name__ == '__main__':
     folder_path = r'D:\PROGRAMMS\PYTHON_PROJECTS\youtube_parse\tracks_wav'
     filenames = os.listdir(folder_path)
 
-    workers = 8  # Желаемое количество потоков
+    workers = 4  # Желаемое количество потоков
     processed_files_counter = [0]  # Счетчик обработанных файлов
     max_files_to_process = 10  # Максимальное количество файлов для обработки
 
@@ -95,4 +98,3 @@ if __name__ == '__main__':
 
     execution_time = time.time() - start_time
     print(f"Processing completed in {execution_time} seconds")
-
