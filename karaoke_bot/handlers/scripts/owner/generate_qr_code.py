@@ -7,24 +7,30 @@ import qrcode
 
 
 async def callback_generate_qr_code(callback: types.CallbackQuery):
+    await callback.answer()
 
     bot_user: types.User = await bot.get_me()
     delimeter = '-'
     karaoke_name = callback.data.split(' ')[1]
     url = f'https://t.me/{bot_user.username}?start=func=search_karaoke{delimeter}karaoke_name={karaoke_name}'
-    qr = qrcode.make(url)
 
-    qr_codes_folder = os.path.join(os.getcwd(), 'qr_codes')  # Создаем папку, если ее нет
-    if not os.path.exists(qr_codes_folder):
-        os.makedirs(qr_codes_folder)
-
-    qr_path = os.path.join(qr_codes_folder, f'{callback.from_user.id}_qr.png')
-    qr.save(qr_path)
+    qr_path = generate_qr_qcode(text=url, qr_id=callback.from_user.id)
 
     with open(qr_path, 'rb') as photo:
         await bot.send_photo(chat_id=callback.from_user.id, photo=photo)
-
     os.remove(qr_path)  # Удаляем сохраненное изображение после отправки
+
+
+def generate_qr_qcode(text: str, qr_id: int, qr_foldername: str = 'qr_codes') -> str:
+    qr = qrcode.make(text)
+
+    qr_folderpath = os.path.join(os.getcwd(), qr_foldername)  # Создаем папку, если ее нет
+    if not os.path.exists(qr_folderpath):
+        os.makedirs(qr_folderpath)
+
+    qr_path = os.path.join(qr_folderpath, f'qr_{qr_id}.png')
+    qr.save(qr_path)
+    return qr_path
 
 
 def register_handlers(dp: Dispatcher):
