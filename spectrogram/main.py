@@ -1,31 +1,34 @@
-import cv2 as cv2
+# import cv2 as cv2
+# import os
+# import torchvision
+# import pandas as pd
+# from skimage import io, transform
+#
+# import matplotlib.pyplot as plt
+# from typing import Tuple, List, Type, Dict, Any
+# import torchvision.models as models
+# import torch.nn.functional as F
+#
+# import torch.optim as optim
+#
+# import time
+#
+# import imgaug as ia
+#
+# import threading
+# import random
+# import accimage
+
 import os
-import torch
-import torchvision
-import pandas as pd
-from skimage import io, transform
 import numpy as np
-import matplotlib.pyplot as plt
-from typing import Tuple, List, Type, Dict, Any
-import torchvision.models as models
-import torch.nn.functional as F
+import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.autograd import Variable
-import time
+from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-import os.path
-import imgaug as ia
-import os
 from threading import Thread
 from queue import Empty, Queue
-import threading
-import random
-import accimage
-from libs import *
 from libs.plot_examples import plot_examples, plot_examples_segmentation
-from torch.utils.tensorboard import SummaryWriter
-from os.path import join, isfile, isdir
 from seg_losses import *
 
 
@@ -33,44 +36,6 @@ resize = 1024
 tb_period = 8
 
 run_prefix = 'Unet_CoordConv_mish_resize1024'
-
-# region logs_basepath
-existing_logs_directories = [d for d in find_directories('./logs', '%s_run*' % run_prefix, maxdepth=2)]
-prev_runs = [os.path.basename(os.path.split(d)[0]) for d in existing_logs_directories]
-prev_runs = [int(s.replace('%s_run' % run_prefix, '')) for s in prev_runs]
-if len(prev_runs) > 0:
-    curr_run = np.max(prev_runs) + 1
-else:
-    curr_run = 1
-curr_run = '%s_run%04d' % (run_prefix, curr_run)
-logs_basepath = os.path.join('./logs', curr_run)
-tb_basepath = os.path.join('./TBoard', curr_run)
-EnsureDirectoryExists(logs_basepath)
-
-checkpoints_basepath = os.path.join('./checkpoints', curr_run)
-EnsureDirectoryExists(checkpoints_basepath)
-# endregion
-
-
-# region backing up the scripts configuration
-EnsureDirectoryExists('./scripts_backup')
-print('backing up the scripts')
-ignore_func = lambda dir, files: [f for f in files if (isfile(join(dir, f)) and f[-3:] != '.py' and f[-4:] != '.csv' and f[-6:] != '.ipynb')] + [d for d in files if ((isdir(d)) & (('scripts_backup' in d) |
-                                                                                                                                        ('__pycache__' in d) |
-                                                                                                                                        ('.pytest_cache' in d) |
-                                                                                                                                        d.endswith('.ipynb_checkpoints') |
-                                                                                                                                        d.endswith('logs.bak') |
-                                                                                                                                        d.endswith('outputs') |
-                                                                                                                                        d.endswith('processed_data') |
-                                                                                                                                        d.endswith('build') |
-                                                                                                                                        d.endswith('images') |
-                                                                                                                                        d.endswith('logs') |
-                                                                                                                                        d.endswith('snapshots')))]
-scripts_backup_dir = os.path.join('./scripts_backup', curr_run)
-copytree_multi('./', scripts_backup_dir, ignore=ignore_func)
-# with open(os.path.join(scripts_backup_dir, 'launch_parameters.txt'), 'w+') as f:
-#     f.writelines([f'{s}\n' for s in sys.argv])
-# endregion backing up the scripts configuration
 
 tb_writer = SummaryWriter(log_dir=tb_basepath)
 
@@ -88,9 +53,6 @@ def calculate_loss(model_result: torch.tensor,
                    data_target: torch.tensor,
                    loss_function: torch.nn.Module = torch.nn.MSELoss()):  # reduction = None
     lossXY = (loss_function(model_result[:, :2], data_target[:, :2])) ** (0.5)  # тут из батчей получаю, править
-    # lossR = loss_function(model_result[:, 2], data_target[:, 2])  # потом корень извлечь
-    #MK: сейчас нет R
-    # return {lossXY.item(), lossR.item()}
     return lossXY.item()
 # endregion
 
@@ -117,7 +79,7 @@ class thread_killer(object):
 
 
 def threaded_batches_feeder(tokill, batches_queue, dataset_generator):
-    while tokill() == False:
+    while True:
         for img, mask, landmarks in dataset_generator:
             batches_queue.put((img, mask, landmarks), block=True)
             if tokill() == True:
@@ -125,7 +87,7 @@ def threaded_batches_feeder(tokill, batches_queue, dataset_generator):
 
 
 def threaded_cuda_batches(tokill, cuda_batches_queue, batches_queue):
-    while tokill() == False:
+    while True:
         (img, mask, landmarks) = batches_queue.get(block=True)
         img = torch.from_numpy(img)
 

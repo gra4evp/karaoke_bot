@@ -90,7 +90,7 @@ class MyDataset:
 
                 # Concurrent access by multiple threads to the lists below
                 with self.yield_lock:
-                    if (len(self.batch_data)) < self.batch_size:
+                    if len(self.batch_data) < self.batch_size:
                         self.batch_data.append((curr_data_x, curr_data_mask, curr_data_y))
 
                     if len(self.batch_data) % self.batch_size == 0:
@@ -100,5 +100,4 @@ class MyDataset:
                         batch_y = np.concatenate(([a[2] for a in self.batch_data]), axis=0)
 
                         yield batch_x, batch_mask, batch_y
-                        # yield self.batch_data
                         self.batch_data = []
