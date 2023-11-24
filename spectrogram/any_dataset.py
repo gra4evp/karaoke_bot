@@ -1,16 +1,17 @@
 import threading
 from sklearn.utils import shuffle
 import numpy as np
+import os
 
 
-class threadsafe_iter:
+class ThreadSafeIter:
     """
     Takes an iterator/generator and makes it thread-safe by
     serializing call to the `next` method of given iterator/generator.
     """
 
-    def __init__(self, it):
-        self.it = it
+    def __init__(self, iterator):
+        self.it = iterator
         self.lock = threading.Lock()
 
     def __iter__(self):
@@ -22,7 +23,8 @@ class threadsafe_iter:
 
 
 def get_objects_i(objects_count):
-    """Cyclic generator of paths indices
+    """
+    Cyclic generator of paths indices
     """
     current_objects_id = 0
     while True:
@@ -30,55 +32,33 @@ def get_objects_i(objects_count):
         current_objects_id = (current_objects_id + 1) % objects_count
 
 
-class MyDataset:
-    """Sun Landmarks dataset."""
+class SpectrogramGenerator:
 
-    def __init__(self, fname, batch_size=32, shuffle=True):
-        self.data = self.read_my_data(fname)
-        self.shuffle = shuffle
-        self.shuffle_data()
+    def __init__(self, folder_path: str, batch_size: int = 16):
+        self.folder_path = folder_path
+        self.filenames = os.listdir(self.folder_path)
+        self.data = shuffle(self.filenames)
+
         self.batch_size = batch_size
 
-        self.objects_id_generator = threadsafe_iter(get_objects_i(len(self.data)))
+        self.objects_id_generator = ThreadSafeIter(get_objects_i(len(self.data)))
 
         self.lock = threading.Lock()  # mutex for input path
         self.yield_lock = threading.Lock()  # mutex for generator yielding of batch
         self.init_count = 0
-        self.mask_dict = {}
+
+    def get_audio_sample(self):
+        pass
 
     def __len__(self):
         return len(self.data)
 
-    def shuffle_data(self):
-        if self.shuffle:
-            self.data = shuffle(self.data)
-
-    def read_my_data(self, fname):
-        # here we need to read the data from disk
-        return np.random.randn(100, 21)
-        # raise NotImplementedError()
-
-    def get_data_by_id(self, id):
-        # here we need to get our data by the ID: index, filename, etc.
-        return self.data[id]
-        # raise NotImplementedError()
-
-    def read_mask(self, mask_fname):
-        if mask_fname in self.mask_dict.keys():
-            return self.mask_dict[mask_fname]
-        else:
-            return self.read_mask_by_fname(mask_fname)
-
     def __iter__(self):
         while True:
-            with self.lock:
-                if (self.init_count == 0):
-                    self.shuffle_data()
-                    self.batch_data = []
-                    self.init_count = 1
 
+            self.batch_data = []
             for obj_id in self.objects_id_generator:
-                curr_data_x, curr_data_mask, curr_data_y = self.get_data_by_id(obj_id)
+                curr_data_x, curr_data_mask, curr_data_y = self.data[obj_id]
 
                 # augmentation
 
@@ -101,3 +81,19 @@ class MyDataset:
 
                         yield batch_x, batch_mask, batch_y
                         self.batch_data = []
+
+    # def __next__(self):
+    #     self.batch_data = []
+    #     filename = self.data[next(self.objects_id_generator)]
+    #     with self.yield_lock:
+    #         if len(self.batch_data) < self.batch_size:
+    #             self.batch_data.append((curr_data_x, curr_data_mask, curr_data_y))
+    #
+    #         if len(self.batch_data) % self.batch_size == 0:
+    #             # self.batch_data = np.concatenate(self.batch_data, axis=0)
+    #             batch_x = np.concatenate(([a[0] for a in self.batch_data]), axis=0)
+    #             batch_mask = np.concatenate(([a[1] for a in self.batch_data]), axis=0)
+    #             batch_y = np.concatenate(([a[2] for a in self.batch_data]), axis=0)
+    #
+    #             yield batch_x, batch_mask, batch_y
+    #             self.batch_data = []

@@ -1,26 +1,17 @@
-# import cv2 as cv2
-# import os
-# import torchvision
-# import pandas as pd
-# from skimage import io, transform
-#
-# import matplotlib.pyplot as plt
-# from typing import Tuple, List, Type, Dict, Any
-# import torchvision.models as models
-# import torch.nn.functional as F
-#
-# import torch.optim as optim
-#
-# import time
-#
+import cv2 as cv2
+import torchvision
+from skimage import io, transform
+import matplotlib.pyplot as plt
+from typing import Tuple, List, Type, Dict, Any
+import torchvision.models as models
+import torch.nn.functional as F
+
 # import imgaug as ia
-#
-# import threading
-# import random
 # import accimage
 
 import os
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -35,26 +26,23 @@ from seg_losses import *
 resize = 1024
 tb_period = 8
 
-run_prefix = 'Unet_CoordConv_mish_resize1024'
-
 tb_writer = SummaryWriter(log_dir=tb_basepath)
-
 device1 = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device2 = torch.device('cpu')
 
 
-# region functions
 def start_train(model):  # запускаем обучение всех слоев
     for param in model.parameters():
         param.requires_grad = True
 
 
-def calculate_loss(model_result: torch.tensor,
-                   data_target: torch.tensor,
-                   loss_function: torch.nn.Module = torch.nn.MSELoss()):  # reduction = None
+def calculate_loss(
+        model_result: torch.tensor,
+        data_target: torch.tensor,
+        loss_function: torch.nn.Module = torch.nn.MSELoss()
+):
     lossXY = (loss_function(model_result[:, :2], data_target[:, :2])) ** (0.5)  # тут из батчей получаю, править
     return lossXY.item()
-# endregion
 
 
 model = UnetCoordConv(activation=Mish)
@@ -64,8 +52,7 @@ model = nn.DataParallel(model)
 model = model.to(device1)
 
 
-# region threading
-class thread_killer(object):
+class ThreadKiller:
     """Boolean object for signaling a worker thread to terminate"""
 
     def __init__(self):
@@ -100,27 +87,16 @@ def threaded_cuda_batches(tokill, cuda_batches_queue, batches_queue):
 
         if tokill() == True:
             return
-#endregion
 
 
-batch_size = 4
-sun_dataset_train = SunDiskDataset(csv_file='sun_disk_pos_database01train.csv',
-                                   root_dir='./images',
-                                   resize=resize,
-                                   batch_size=batch_size)
-sun_dataset_test = SunDiskDataset(csv_file='sun_disk_pos_database01test.csv',
-                                  root_dir='./images',
-                                  resize=resize,
-                                  batch_size=batch_size,
-                                  augment=False)
-
-
-def train_single_epoch(model: torch.nn.Module,
-                       optimizer: torch.optim.Optimizer,
-                       loss_function: torch.nn.Module,
-                       cuda_batches_queue: Queue,
-                       Per_Step_Epoch: int,
-                       current_epoch: int):
+def train_single_epoch(
+        model: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        loss_function: torch.nn.Module,
+        cuda_batches_queue: Queue,
+        Per_Step_Epoch: int,
+        current_epoch: int
+):
     model.train()
     loss_values = []
     loss_tb = []
@@ -182,7 +158,7 @@ def validate_single_epoch(model: torch.nn.Module,
     return np.mean(loss_values)
 
 
-def train_model(model: torch.nn.Module, train_dataset: Dataset, val_dataset: Dataset, max_epochs=480):
+def train_model(model: torch.nn.Module, train_dataset, val_dataset, max_epochs=480):
 
     loss_function = BinaryFocalLoss(alpha=1, gamma=4)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -194,28 +170,28 @@ def train_model(model: torch.nn.Module, train_dataset: Dataset, val_dataset: Dat
 
     train_batches_queue = Queue(maxsize=batches_queue_length)
     train_cuda_batches_queue = Queue(maxsize=4)
-    train_thread_killer = thread_killer()
+    train_thread_killer = ThreadKiller()
     train_thread_killer.set_tokill(False)
 
     for _ in range(preprocess_workers):
         thr = Thread(target=threaded_batches_feeder, args=(train_thread_killer, train_batches_queue, train_dataset))
         thr.start()
 
-    train_cuda_transfers_thread_killer = thread_killer()
+    train_cuda_transfers_thread_killer = ThreadKiller()
     train_cuda_transfers_thread_killer.set_tokill(False)
     train_cudathread = Thread(target=threaded_cuda_batches, args=(train_cuda_transfers_thread_killer, train_cuda_batches_queue, train_batches_queue))
     train_cudathread.start()
 
     test_batches_queue = Queue(maxsize=batches_queue_length)
     test_cuda_batches_queue = Queue(maxsize=4)
-    test_thread_killer = thread_killer()
+    test_thread_killer = ThreadKiller()
     test_thread_killer.set_tokill(False)
 
     for _ in range(preprocess_workers):
         thr = Thread(target=threaded_batches_feeder, args=(test_thread_killer, test_batches_queue, sun_dataset_test))
         thr.start()
 
-    test_cuda_transfers_thread_killer = thread_killer()
+    test_cuda_transfers_thread_killer = ThreadKiller()
     test_cuda_transfers_thread_killer.set_tokill(False)
     test_cudathread = Thread(target=threaded_cuda_batches,
                              args=(test_cuda_transfers_thread_killer, test_cuda_batches_queue,

@@ -56,7 +56,14 @@ def process_files(
             processed_files_counter[0] += 1
 
         y, sr = librosa.load(path=os.path.join(folder_path, filename), sr=SR)
-        wav_spectrograms = get_spectrograms(audio=y, sr=sr, n_samples=8, start=20, duration=20, overlap=15)
+        wav_spectrograms = get_spectrograms(
+            audio=y,
+            sr=sr,
+            n_samples=NUM_SAMPLES,
+            start=START_TIME,
+            duration=DURATION,
+            overlap=OVERLAP
+        )
         result_queue.put(wav_spectrograms, block=True)
 
 
@@ -66,7 +73,7 @@ if __name__ == '__main__':
     MAX_FILES_TO_PROCESS = 10
     NUM_SAMPLES = 8
     START_TIME = 20
-    DURATION = 20
+    DURATION = 10
     OVERLAP = 5
 
     folder_path = r'D:\PROGRAMMS\PYTHON_PROJECTS\youtube_parse\tracks_wav'
