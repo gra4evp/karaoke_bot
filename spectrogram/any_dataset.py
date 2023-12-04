@@ -119,9 +119,6 @@ class SpectrogramGenerator:
                 batch_x1 = [a[0] for a in self.batch_data]
                 batch_x2 = [a[1] for a in self.batch_data]
                 batch_y = [a[2] for a in self.batch_data]
-                # batch_x1 = np.concatenate(([a[0] for a in self.batch_data]), axis=0)
-                # batch_x2 = np.concatenate(([a[1] for a in self.batch_data]), axis=0)
-                # batch_y = np.concatenate(([a[2] for a in self.batch_data]), axis=0)
 
                 self.batch_data = []
                 return batch_x1, batch_x2, batch_y
@@ -148,7 +145,7 @@ class SpectrogramGenerator:
 
 if __name__ == "__main__":
     SR = 44100
-    WORKERS = 4  # Желаемое количество потоков
+    # WORKERS = 4  # Желаемое количество потоков
     BATCH_SIZE = 16
     START_TIME = 20
     DURATION = 10
