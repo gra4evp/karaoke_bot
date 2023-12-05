@@ -159,7 +159,8 @@ async def new_karaoke_command_confirm(
         avatar_id = data.get('karaoke_avatar')
         description = data.get('description')
 
-    text = confirm_text + lm.localize_text(fname, lg_code, params=['messages', 'name']) + name
+    local_name = lm.localize_text(fname, lg_code, params=['messages', 'name'])
+    text = confirm_text + local_name + name
     if description is not None:
         text += lm.localize_text(fname, lg_code, params=['messages', 'description']) + description
 
@@ -172,6 +173,12 @@ async def new_karaoke_command_confirm(
 async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext):
     fname = callback_new_karaoke.__name__
     lg_code = callback.from_user.language_code
+
+    # Нужно заменить lg_code на код пользователя при вызове функции из callback_new_karaoke и передаче message
+    # Потому что будет передаваться message самого бота
+    callback.message.from_user.language_code = lg_code
+
+    user_id = callback.from_user.id
 
     await callback.answer()
 
@@ -233,7 +240,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
 
         case ('cancel', 'force'):
             await callback.message.answer(
-                text=lm.localize_text(fname, lg_code, params=['messages', 'skip_avatar'])
+                text=lm.localize_text(fname, lg_code, params=['messages', 'cancel_force'])
             )
             await callback.message.delete()
             await state.finish()
@@ -270,12 +277,13 @@ async def register_karaoke(state: FSMContext, lg_code: str):
         print(f"ERROR OCCURRED: {e}")
         await bot.send_message(
             chat_id=owner.id,
-            text=lm.localize_text(fname, lg_code, params=['messages', 'success'])
+            text=lm.localize_text(fname, lg_code, params=['messages', 'fail'])
         )
     else:
         await bot.send_message(
             chat_id=owner.id,
-            text=lm.localize_text(fname, lg_code, params=['messages', 'fail'])
+            text=lm.localize_text(fname, lg_code, params=['messages', 'success']),
+            parse_mode='HTML'
         )
 
 
