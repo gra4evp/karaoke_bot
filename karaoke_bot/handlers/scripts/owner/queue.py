@@ -49,21 +49,6 @@ async def get_lap_queue_command(message: types.Message, state: FSMContext):
     else:
         await message.answer("You haven't created any karaoke yet")
 
-    #     for user, track in next(karaoke.next_round):
-    #         track_number = 1
-    #         index = track_number - 1
-    #         keyboard = InlineKeyboardMarkup()
-    #         keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
-    #         keyboard.insert(InlineKeyboardButton(
-    #             text="❌ Remove from queue",
-    #             callback_data=f'rm_from_queue {karaoke.name} {user.aiogram_user.id} {track.id}')
-    #         )
-    #         await message.answer(f"{track_number}. {hlink('Track', track.url)}\n"
-    #                              f"Ordered by: @{user.aiogram_user.username}\n"
-    #                              f"Karaoke: {karaoke.name}",
-    #                              reply_markup=keyboard,
-    #                              parse_mode='HTML')
-
 
 async def get_lap_queue_command_message(message: types.Message, laps: int):
     if laps:
@@ -154,9 +139,9 @@ async def callback_remove_from_queue(callback: types.CallbackQuery):
             await callback.message.edit_reply_markup(keyboard)
 
 
-def register_handlers(dispatcher: Dispatcher):
-    dispatcher.register_message_handler(show_queue_command, commands=['show_queue'])
-    dispatcher.register_message_handler(get_lap_queue_command, commands=['get_lap_queue'])
-    dispatcher.register_callback_query_handler(callback_remove_from_queue, Text(startswith='rm_from_queue'))
+def register_handlers(dp: Dispatcher):
+    dp.register_message_handler(show_queue_command, commands=['show_queue'])
+    dp.register_message_handler(get_lap_queue_command, commands=['get_lap_queue'])
+    dp.register_callback_query_handler(callback_remove_from_queue, Text(startswith='rm_from_queue'))
 
-    dispatcher.register_callback_query_handler(callback_get_lap_queue_command, Text(startswith='lap_queue'))
+    dp.register_callback_query_handler(callback_get_lap_queue_command, Text(startswith='lap_queue'))
