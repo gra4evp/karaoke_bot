@@ -251,7 +251,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
 
 
 async def register_karaoke(state: FSMContext, lg_code: str):
-    fname = callback_new_karaoke.__name__
+    fname = register_karaoke.__name__
 
     async with state.proxy() as data:
         owner: types.User = data.get('owner')
