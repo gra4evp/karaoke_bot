@@ -49,7 +49,10 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
         if current_state == 'NewKaraoke:name':
             await NewKaraoke.avatar.set()
             keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip avatar'))
+            keyboard.add(InlineKeyboardButton(
+                text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+                callback_data='new_karaoke skip avatar')
+            )
             await message.answer(
                 text=lm.localize_text(fname, lg_code, params=['messages', 'now_send_photo']),
                 reply_markup=keyboard,
@@ -90,7 +93,10 @@ async def karaoke_avatar_registration(message: types.Message, state: FSMContext)
     if current_state == 'NewKaraoke:avatar':
         await NewKaraoke.description.set()
         keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
+        keyboard.add(InlineKeyboardButton(
+            text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+            callback_data='new_karaoke skip description')
+        )
         await message.answer(
             text=lm.localize_text(fname, lg_code, params=['messages', 'send_description']),
             reply_markup=keyboard,
@@ -224,7 +230,10 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
         case ('skip', 'avatar'):
             await NewKaraoke.description.set()
             await callback.message.edit_reply_markup()  # delete markup
-            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
+            keyboard.add(InlineKeyboardButton(
+                text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+                callback_data='new_karaoke skip description')
+            )
             await callback.message.answer(
                 text=lm.localize_text(fname, lg_code, params=['messages', 'skip_avatar']),
                 reply_markup=keyboard,

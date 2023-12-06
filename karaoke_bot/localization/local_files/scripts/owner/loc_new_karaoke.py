@@ -32,8 +32,8 @@ local_dict = {
 
         'buttons': {
             'skip': {
-                'en': 'Skip',
-                'ru': 'Пропустить'
+                'en': "Skip",
+                'ru': "Пропустить"
             }
         }
     },
@@ -61,6 +61,13 @@ local_dict = {
             'avatar_updated': {
                 'en': "✅ Success! 🖼 <b>AVATAR</b> updated.",
                 'ru': '✅ Успешно! 🖼 <b>АВАТАР</b> обновлен.'
+            }
+        },
+
+        'buttons': {
+            'skip': {
+                'en': "Skip",
+                'ru': "Пропустить"
             }
         }
     },
@@ -140,6 +147,13 @@ local_dict = {
             'cancel_force': {
                 'en': "❌ Create karaoke canceled",
                 'ru': "❌ Создание караоке отменено"
+            }
+        },
+
+        'buttons': {
+            'skip': {
+                'en': "Skip",
+                'ru': "Пропустить"
             }
         }
     },
