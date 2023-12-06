@@ -33,7 +33,7 @@ local_dict = {
         'messages': {
             'track_added': {
                 'en': "✅ Your track has been added to the queue!",
-                'ru': "✅Ваш трек добавлен в очередь!"
+                'ru': "✅ Ваш трек добавлен в очередь!"
             }
         }
     },
