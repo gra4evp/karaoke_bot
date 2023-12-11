@@ -11,12 +11,13 @@ from karaoke_bot.handlers.scripts.common.register_telegram_user import register_
 from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
 from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
-from karaoke_bot.keyboards.owner.new_karaoke_keyboards import keyboards
 from karaoke_bot.localization.localization_manager import LocalizationManager
 from karaoke_bot.localization.local_files.scripts.owner.loc_new_karaoke import local_dict
+from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
 
 
 lm = LocalizationManager(local_dict=local_dict)
+kf = KeyboardFactory(lm=lm)
 
 
 async def new_karaoke_command(message: types.Message, state: FSMContext):
@@ -61,7 +62,7 @@ async def karaoke_name_registration(message: types.Message, state: FSMContext):
         else:
             await message.answer(
                 text=lm.localize_text(fname, lg_code, params=['messages', 'success_update']),
-                reply_markup=keyboards['back_to'],
+                reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
                 parse_mode='HTML'
             )
     else:
@@ -105,7 +106,7 @@ async def karaoke_avatar_registration(message: types.Message, state: FSMContext)
     else:
         await message.answer(
             text=lm.localize_text(fname, lg_code, params=['messages', 'avatar_updated']),
-            reply_markup=keyboards['back_to'],
+            reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
             parse_mode='HTML'
         )
 
@@ -115,13 +116,15 @@ async def karaoke_avatar_is_invalid(message: types.Message):
         text=lm.localize_text(
             karaoke_avatar_is_invalid.__name__,
             message.from_user.language_code,
-            params=['messages', 'avatar_updated']
+            params=['messages', 'invalid_avatar']
         ),
         parse_mode='HTML'
     )
 
 
 async def karaoke_description_registration(message: types.Message, state: FSMContext):
+    lg_code = message.from_user.language_code
+
     async with state.proxy() as data:
         data['description'] = message.html_text
     current_state = await state.get_state()
@@ -131,10 +134,10 @@ async def karaoke_description_registration(message: types.Message, state: FSMCon
         await message.answer(
             text=lm.localize_text(
                 karaoke_description_registration.__name__,
-                message.from_user.language_code,
+                lg_code,
                 params=['messages', 'description_updated']
             ),
-            reply_markup=keyboards['back_to'],
+            reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
             parse_mode='HTML'
         )
 
@@ -153,7 +156,7 @@ async def karaoke_description_is_invalid(message: types.Message) -> None:
 async def new_karaoke_command_confirm(
         message: types.Message,
         state: FSMContext,
-        keyboard: InlineKeyboardMarkup = keyboards['confirm']
+        keyboard: InlineKeyboardMarkup | None = None
 ) -> None:
 
     fname = new_karaoke_command_confirm.__name__
@@ -169,6 +172,9 @@ async def new_karaoke_command_confirm(
     text = confirm_text + local_name + name
     if description is not None:
         text += lm.localize_text(fname, lg_code, params=['messages', 'description']) + description
+
+    if keyboard is None:
+        keyboard = kf.get_inline_keyboard('keyboard_confirm', lg_code)
 
     if avatar_id is not None:
         await message.answer_photo(photo=avatar_id, caption=text, reply_markup=keyboard, parse_mode='HTML')
@@ -192,7 +198,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
     callback_data = callback.data.split(' ')[1:]
     match callback_data:
         case ('create',):
-            await callback.message.edit_reply_markup(keyboards['create'])
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_create', lg_code))
 
         case ('create', 'force'):
             await callback.message.delete()
@@ -204,7 +210,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await search_karaoke(message=message_karaoke_name, state=state)
 
         case ('edit',):
-            await callback.message.edit_reply_markup(keyboards['edit'])
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_edit', lg_code))
 
         case ('edit', 'name'):
             await NewKaraoke.edit_name.set()
@@ -245,7 +251,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await new_karaoke_command_confirm(message=callback.message, state=state)
 
         case ('cancel',):
-            await callback.message.edit_reply_markup(keyboards['cancel'])
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_cancel', lg_code))
 
         case ('cancel', 'force'):
             await callback.message.answer(
@@ -255,7 +261,7 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
             await state.finish()
 
         case ('back',):
-            await callback.message.edit_reply_markup(keyboards['confirm'])
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_confirm', lg_code))
 
         case ('back', 'confirmation'):
             await callback.message.delete()
@@ -263,7 +269,11 @@ async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext)
 
         case ('back', 'editing'):
             await callback.message.delete()
-            await new_karaoke_command_confirm(message=callback.message, state=state, keyboard=keyboards['edit'])
+            await new_karaoke_command_confirm(
+                message=callback.message,
+                state=state,
+                keyboard=kf.get_inline_keyboard('keyboard_edit', lg_code)
+            )
 
 
 async def register_karaoke(state: FSMContext, lg_code: str):
