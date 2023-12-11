@@ -170,5 +170,109 @@ local_dict = {
                 'ru': "Упс, что-то пошло не так, мы уже работаем над ошибкой."
             }
         }
+    },
+
+    'keyboard_confirm': {
+        'buttons': [
+            {
+                'en': "✅ Confirm and Create",
+                'ru': "✅ Подтвердить и создать",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke create'
+            },
+            {
+                'en': "✏️ Edit",
+                'ru': "✏️ Редактировать",
+                'attach_mode': 'insert',
+                'callback_data': 'new_karaoke edit'
+            },
+            {
+                'en': "❌ Cancel",
+                'ru': "❌ Отмена",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke cancel'
+            }
+
+        ]
+    },
+
+    'keyboard_edit': {
+        'buttons': [
+            {
+                'en': "💬 Edit name",
+                'ru': "💬 Изменить имя",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke edit name'
+            },
+            {
+                'en': "🖼 Edit avatar",
+                'ru': "🖼 Изменить аватар",
+                'attach_mode': 'insert',
+                'callback_data': 'new_karaoke edit avatar'
+            },
+            {
+                'en': "🗒 Edit description",
+                'ru': "🗒 Изменить описание",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke edit description'
+            },
+            {
+                'en': "<< Back",
+                'ru': "<< Назад",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke back'
+            }
+        ]
+    },
+
+    'keyboard_back_to': {
+        'buttons': [
+            {
+                'en': "<< Back to confirmation",
+                'ru': "<< Назад к подтверждению",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke back confirmation'
+            },
+            {
+                'en': "<< Back to editing",
+                'ru': "<< Назад к редактированию",
+                'attach_mode': 'insert',
+                'callback_data': 'new_karaoke back editing'
+            }
+        ]
+    },
+
+    'keyboard_create': {
+        'buttons': [
+            {
+                'en': "✅ Create",
+                'ru': "✅ Создать",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke create force'
+            },
+            {
+                'en': "<< Back",
+                'ru': "<< Назад",
+                'attach_mode': 'insert',
+                'callback_data': 'new_karaoke back'
+            }
+        ]
+    },
+
+    'keyboard_cancel': {
+        'buttons': [
+            {
+                'en': "❌ Cancel",
+                'ru': "❌ Отмена",
+                'attach_mode': 'add',
+                'callback_data': 'new_karaoke cancel force'
+            },
+            {
+                'en': "<< Back",
+                'ru': "<< Назад",
+                'attach_mode': 'insert',
+                'callback_data': 'new_karaoke back'
+            }
+        ]
     }
 }
