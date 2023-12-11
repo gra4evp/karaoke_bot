@@ -8,14 +8,25 @@ from karaoke_bot.handlers.scripts.common.register_telegram_user import register_
 from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_karaoke_data_by_name
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
-from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, Karaoke
 from karaoke_bot.handlers.utils import format_subscribers_count
 from .order_track import order_track_command
 from karaoke_bot.states import owner_states, visitor_states
+from karaoke_bot.localization.localization_manager import LocalizationManager
+from karaoke_bot.localization.local_files.scripts.visitor.loc_search_karaoke import local_dict
+
+
+lm = LocalizationManager(local_dict=local_dict)
 
 
 async def search_karaoke_command(message: types.Message):
-    await message.answer(f"Enter the <b>NAME</b> of the virtual karaoke where you plan to perform.", parse_mode='HTML')
+    await message.answer(
+        text=lm.localize_text(
+            search_karaoke_command.__name__,
+            message.from_user.language_code,
+            params=['messages', 'enter_name']
+        ),
+        parse_mode='HTML'
+    )
     await KaraokeSearch.name.set()
 
 
@@ -25,6 +36,8 @@ async def callback_search_karaoke_command(callback: types.CallbackQuery):
 
 
 async def search_karaoke(message: types.Message, state: FSMContext):
+    fname = search_karaoke.__name__
+    lg_code = message.from_user.language_code
 
     karaoke_name = message.text
     try:
@@ -32,15 +45,14 @@ async def search_karaoke(message: types.Message, state: FSMContext):
     except KaraokeNotFoundError as e:
         print(f"ERROR OCCURRED: {e.args}")
         await message.reply(
-            "Oops, there is no such karaoke yet.\n\n"
-            "Try to get the <b>NAME</b> from the administrator of the institution where you are.",
+            text=lm.localize_text(fname, lg_code, params=['messages', 'no_karaoke']),
             parse_mode='HTML'
         )
     else:
         subscribers_amount = karaoke_data['subscribers']['amount']
-        caption = f"<b>Karaoke</b>: {karaoke_name}\n" \
-                  f"<b>Owner</b>: @{karaoke_data['owner']['username']}\n" \
-                  f"<b>Subscribers</b>: {format_subscribers_count(subscribers_amount)}\n\n"
+        caption = f"{lm.localize_text(fname, lg_code, params=['messages', 'karaoke'])} {karaoke_name}\n" \
+                  f"{lm.localize_text(fname, lg_code, params=['messages', 'owner'])} @{karaoke_data['owner']['username']}\n" \
+                  f"{lm.localize_text(fname, lg_code, params=['messages', 'subscribers'])}: {format_subscribers_count(subscribers_amount)}\n\n"
 
         if karaoke_data['description'] is not None:
             caption += karaoke_data['description']
@@ -49,7 +61,7 @@ async def search_karaoke(message: types.Message, state: FSMContext):
         if karaoke_data['subscribers']['is_subscribed']:
             keyboard = InlineKeyboardMarkup()
             keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
-            caption += "\n\n✅ You have already subscribed!"
+            caption += lm.localize_text(fname, lg_code, params=['message', 'already_sub'])
         else:
             keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
 
@@ -66,6 +78,8 @@ async def search_karaoke(message: types.Message, state: FSMContext):
 
 
 async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FSMContext):
+    fname = callback_subscribe_to_karaoke.__name__
+    lg_code = callback.from_user.language_code
 
     karaoke_name = callback.data.split(' ')[-1]
     user_id = callback.from_user.id
@@ -81,7 +95,10 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         print(f"ERROR OCCURRED: {e.args}")
         await callback.message.answer(text=e.args[0])
     else:
-        await callback.answer("✅ Success! You have subscribed!", show_alert=True)
+        await callback.answer(
+            text=lm.localize_text(fname, lg_code, params=['messages', 'you_sub']),
+            show_alert=True
+        )
 
         current_state = await state.get_state()
         match current_state:
