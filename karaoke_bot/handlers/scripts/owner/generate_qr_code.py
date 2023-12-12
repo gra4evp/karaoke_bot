@@ -34,4 +34,4 @@ def generate_qr_qcode(text: str, qr_id: int, qr_foldername: str = 'qr_codes') ->
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_callback_query_handler(callback_generate_qr_code, Text(startswith='get_qr_code'))
+    dp.register_callback_query_handler(callback_generate_qr_code, Text(startswith='get_qr_code'), state='*')
