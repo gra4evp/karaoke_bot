@@ -13,9 +13,11 @@ from .order_track import order_track_command
 from karaoke_bot.states import owner_states, visitor_states
 from karaoke_bot.localization.localization_manager import LocalizationManager
 from karaoke_bot.localization.local_files.scripts.visitor.loc_search_karaoke import local_dict
+from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
 
 
 lm = LocalizationManager(local_dict=local_dict)
+kf = KeyboardFactory(lm=lm)
 
 
 async def search_karaoke_command(message: types.Message):
@@ -57,13 +59,19 @@ async def search_karaoke(message: types.Message, state: FSMContext):
         if karaoke_data['description'] is not None:
             caption += karaoke_data['description']
 
-        keyboard = InlineKeyboardMarkup()
-        if karaoke_data['subscribers']['is_subscribed']:
-            keyboard = InlineKeyboardMarkup()
-            keyboard.add(InlineKeyboardButton('Order a track', callback_data='order_track'))
-            caption += lm.localize_text(fname, lg_code, params=['message', 'already_sub'])
+        if karaoke_data['subscribers']['is_subscribed']:  # если пользователь уже подписан
+            keyboard = kf.get_inline_keyboard(
+                keyboard_name='keyboard_order_track',
+                lg_code=lg_code,
+                callbacks_data={1: f'subscribe_to {karaoke_name}'}
+            )
+            caption += lm.localize_text(fname, lg_code, params=['messages', 'already_sub'])
         else:
-            keyboard.add(InlineKeyboardButton(text="Subscribe", callback_data=f"subscribe_to {karaoke_name}"))
+            keyboard = kf.get_inline_keyboard(
+                keyboard_name='keyboard_subscribe',
+                lg_code=lg_code,
+                callbacks_data={1: f'subscribe_to {karaoke_name}'}
+            )
 
         if karaoke_data['avatar_id'] is not None:
             await bot.send_photo(
@@ -104,10 +112,16 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         match current_state:
             case owner_states.NewKaraoke.new_karaoke.state:
                 await state.finish()
-                keyboard = InlineKeyboardMarkup()
-                keyboard.insert(InlineKeyboardButton('Order a track', callback_data='order_track'))
-                keyboard.insert(InlineKeyboardButton('Get QR-code', callback_data=f'get_qr_code {karaoke_name}'))
-                await callback.message.edit_reply_markup(reply_markup=keyboard)
+                # keyboard = InlineKeyboardMarkup()
+                # keyboard.insert(InlineKeyboardButton('Order a track', callback_data='order_track'))
+                # keyboard.insert(InlineKeyboardButton('Get QR-code', callback_data=f'get_qr_code {karaoke_name}'))
+                await callback.message.edit_reply_markup(
+                    reply_markup=kf.get_inline_keyboard(
+                        keyboard_name='keyboard_already_sub',
+                        lg_code=lg_code,
+                        callbacks_data={2: f'get_qr_code {karaoke_name}'}
+                    )
+                )
 
             case _:
                 await order_track_command(callback.message, state, callback.from_user.id)
