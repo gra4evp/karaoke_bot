@@ -46,5 +46,41 @@ local_dict = {
                 'ru': "✅ Успех! Вы подписались!"
             }
         }
+    },
+
+    'keyboard_order_track': {
+        'buttons': [
+            {
+                'en': "Order a track",
+                'ru': "Заказать трек",
+                'attach_mode': 'add'
+            }
+        ]
+    },
+
+    'keyboard_subscribe': {
+        'buttons': [
+            {
+                'en': "Subscribe",
+                'ru': "Подписаться",
+                'attach_mode': 'add'
+            }
+        ]
+    },
+
+    'keyboard_already_sub': {
+        'buttons': [
+            {
+                'en': "Order a track",
+                'ru': "Заказать трек",
+                'attach_mode': 'insert',
+                'callback_data': 'order_track'
+            },
+            {
+                'en': "Get QR-code",
+                'ru': "Получить QR код",
+                'attach_mode': 'insert'
+            }
+        ]
     }
 }
