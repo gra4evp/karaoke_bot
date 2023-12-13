@@ -3,7 +3,7 @@ from create_bot import dispatcher
 from karaoke_bot.handlers.scripts import admin, moderator, owner, visitor, common
 
 
-common.other.register_handlers(dispatcher)
+common.start_cancel.register_handlers(dispatcher)
 common.menu.register_handlers(dispatcher)
 
 owner.new_karaoke.register_handlers(dispatcher)
