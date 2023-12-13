@@ -61,11 +61,7 @@ async def search_karaoke(message: types.Message, state: FSMContext):
             caption += karaoke_data['description']
 
         if karaoke_data['subscribers']['is_subscribed']:  # если пользователь уже подписан
-            keyboard = kf.get_inline_keyboard(
-                keyboard_name='keyboard_order_track',
-                lg_code=lg_code,
-                callbacks_data={1: f'subscribe_to {karaoke_name}'}
-            )
+            keyboard = kf.get_inline_keyboard(keyboard_name='keyboard_order_track', lg_code=lg_code)
             caption += lm.localize_text(fname, lg_code, params=['messages', 'already_sub'])
         else:
             keyboard = kf.get_inline_keyboard(

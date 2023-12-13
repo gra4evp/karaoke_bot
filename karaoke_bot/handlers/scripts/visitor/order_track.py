@@ -18,6 +18,7 @@ lm = LocalizationManager(local_dict=local_dict)
 
 async def callback_order_track_command(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
+    callback.message.from_user = callback.from_user  # Чтобы вся информация была от пользователя, а не от бота
     await order_track_command(message=callback.message, state=state, user_id=callback.from_user.id)
 
 
