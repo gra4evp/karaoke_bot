@@ -113,9 +113,6 @@ async def callback_subscribe_to_karaoke(callback: types.CallbackQuery, state: FS
         match current_state:
             case owner_states.NewKaraoke.new_karaoke.state:
                 await state.finish()
-                # keyboard = InlineKeyboardMarkup()
-                # keyboard.insert(InlineKeyboardButton('Order a track', callback_data='order_track'))
-                # keyboard.insert(InlineKeyboardButton('Get QR-code', callback_data=f'get_qr_code {karaoke_name}'))
                 await callback.message.edit_reply_markup(
                     reply_markup=kf.get_inline_keyboard(
                         keyboard_name='keyboard_already_sub',
