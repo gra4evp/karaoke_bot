@@ -34,6 +34,7 @@ async def search_karaoke_command(message: types.Message):
 
 async def callback_search_karaoke_command(callback: types.CallbackQuery):
     await callback.answer()
+    callback.message.from_user = callback.from_user  # Чтобы вся информация была от пользователя, а не от бота
     await search_karaoke_command(callback.message)
 
 
