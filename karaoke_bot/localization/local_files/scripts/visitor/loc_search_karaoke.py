@@ -53,7 +53,8 @@ local_dict = {
             {
                 'en': "Order a track",
                 'ru': "Заказать трек",
-                'attach_mode': 'add'
+                'attach_mode': 'add',
+                'callback_data': 'order_track'
             }
         ]
     },
