@@ -10,3 +10,12 @@ class NewKaraoke(StatesGroup):
     edit_avatar = State()
     edit_description = State()
     confirm = State()
+    new_karaoke = State()
+
+
+class LapQueue(StatesGroup):
+    pass
+
+
+class QRCode(StatesGroup):
+    text = State()

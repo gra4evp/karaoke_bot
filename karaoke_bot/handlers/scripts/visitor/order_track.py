@@ -4,14 +4,28 @@ from aiogram.dispatcher import FSMContext
 from karaoke_bot.states.visitor_states import OrderTrack
 from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 from karaoke_bot.karaoke_gram.karaoke import add_track_to_queue
 from karaoke_bot.models.sqlalchemy_data_utils import get_selected_karaoke_data, add_performance_to_visitor
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
+from karaoke_bot.localization.localization_manager import LocalizationManager
+from karaoke_bot.localization.local_files.scripts.visitor.loc_order_track import local_dict
+
+
+lm = LocalizationManager(local_dict=local_dict)
+
+
+async def callback_order_track_command(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    callback.message.from_user = callback.from_user  # Чтобы вся информация была от пользователя, а не от бота
+    await order_track_command(message=callback.message, state=state, user_id=callback.from_user.id)
 
 
 async def order_track_command(message: types.Message, state: FSMContext, user_id=None):
+    fname = order_track_command.__name__
+    lg_code = message.from_user.language_code
+
     if user_id is None:
         user_id = message.from_user.id
 
@@ -21,11 +35,18 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
         print(f"ERROR OCCURRED: {e}")
 
         keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="✅ Yes", callback_data='search_karaoke'))
-        keyboard.insert(InlineKeyboardButton(text="❌ No", callback_data='cancel'))
+        keyboard.add(InlineKeyboardButton(
+            text=lm.localize_text(fname, lg_code, params=['buttons', 'yes']),
+            callback_data='search_karaoke')
+        )
+        keyboard.insert(InlineKeyboardButton(
+            text=lm.localize_text(fname, lg_code, params=['buttons', 'no']),
+            callback_data='cancel')
+        )
+
         await bot.send_message(
             chat_id=user_id,
-            text="You have not chosen any karaoke where you can order music.\n\nGo to karaoke search?",
+            text=lm.localize_text(fname, lg_code, params=['messages', 'not_chosen_karaoke']),
             reply_markup=keyboard,
             parse_mode='HTML'
         )
@@ -41,10 +62,13 @@ async def order_track_command(message: types.Message, state: FSMContext, user_id
             data['karaoke_name'] = karaoke_name
             data['owner_id'] = owner_id
         keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton(text="Change karaoke", callback_data='change_selected_karaoke'))
+        keyboard.add(InlineKeyboardButton(
+            text=lm.localize_text(fname, lg_code, params=['buttons', 'change_karaoke']),
+            callback_data='change_selected_karaoke')
+        )
         await bot.send_message(
             chat_id=user_id,
-            text=f"Please send a link to the track on YouTube or XMinus\n\n<b>Selected karaoke:</b> {karaoke_name}",
+            text=lm.localize_text(fname, lg_code, params=['messages', 'send_track']) + karaoke_name,
             reply_markup=keyboard,
             parse_mode='HTML'
         )
@@ -65,24 +89,31 @@ async def add_link(message: types.Message, state: FSMContext):
         print(f"ERROR OCCURRED: {e}")
     else:
         add_track_to_queue(user=message.from_user, karaoke_name=karaoke_name, owner_id=owner_id, track_url=message.text)
-        await message.answer("✅ Your track has been added to the queue!")
+        await message.answer(
+            text=lm.localize_text(
+                add_link.__name__,
+                message.from_user.language_code,
+                params=['messages', 'track_added']
+            )
+        )
     finally:
         await state.finish()
 
 
 async def link_is_invalid(message: types.Message, state: FSMContext):
+    lg_code = message.from_user.language_code
+
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(text="Change karaoke", callback_data='change_selected_karaoke'))
+    keyboard.add(InlineKeyboardButton(
+        text=lm.localize_text(order_track_command.__name__, lg_code, params=['buttons', 'change_karaoke']),
+        callback_data='change_selected_karaoke')
+    )
 
     async with state.proxy() as data:
         karaoke_name = data.get('karaoke_name')
 
     await message.reply(
-        f"The <b>link</b> must be in the format:\n"
-        f"✅ - https://youtu.be/\n"
-        f"✅ - https://www.youtube.com/\n\n"
-        f"Please try again"
-        f"\n\n<b>Selected karaoke:</b> {karaoke_name}",
+        text=lm.localize_text(link_is_invalid.__name__, lg_code, params=['messages', 'link_invalid']) + karaoke_name,
         reply_markup=keyboard,
         disable_web_page_preview=True,
         parse_mode='HTML'
@@ -90,7 +121,13 @@ async def link_is_invalid(message: types.Message, state: FSMContext):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_message_handler(order_track_command, commands=['order_track'])
+    dp.register_message_handler(order_track_command, commands=['order_track'], state='*')
+    dp.register_message_handler(
+        order_track_command,
+        Text(equals=["Order a track", "Заказать трек"], ignore_case=True),
+        state='*'
+    )
+    dp.register_callback_query_handler(callback_order_track_command, Text(startswith='order_track'), state='*')
 
     dp.register_message_handler(
         add_link,

@@ -13,7 +13,7 @@ class TelegramProfile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     is_bot: Mapped[bool]
     first_name: Mapped[str] = mapped_column(String(64))
-    last_name: Mapped[str] = mapped_column(String(64))
+    last_name: Mapped[str] = mapped_column(String(64), nullable=True)
     username: Mapped[str] = mapped_column(String(32), nullable=True)
     language_code: Mapped[str] = mapped_column(String(10))
     is_premium: Mapped[bool] = mapped_column(nullable=True)

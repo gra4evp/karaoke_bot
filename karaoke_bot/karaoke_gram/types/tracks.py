@@ -1,9 +1,16 @@
 from yt_dlp import YoutubeDL
 from typing import Dict
-from .track_status import TrackStatus, TrackWaited
+from .track_status import TrackStatus, TrackWaited, TrackRemoved
 
 
 class Track:
+    _track_counter = 0  # Счетчик для порядковых номеров треков (id)
+
+    def __new__(cls, url):
+        instance = super(Track, cls).__new__(cls)
+        Track._track_counter += 1
+        instance.id = Track._track_counter
+        return instance
 
     def __init__(self, url):
         self.url = url
@@ -12,6 +19,9 @@ class Track:
 
     def get_info(self):
         raise NotImplementedError
+
+    def remove(self):
+        self.status = TrackRemoved()
 
     def __str__(self):
         pass

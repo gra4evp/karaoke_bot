@@ -1,103 +1,154 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.states.owner_states import NewKaraoke
-from karaoke_bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 from string import ascii_letters, digits
-from karaoke_bot.handlers.scripts.common.other import register_telegram_user
+
+from karaoke_bot.create_bot import bot
+from karaoke_bot.states.owner_states import NewKaraoke
+from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
 from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
 from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
+from karaoke_bot.localization.localization_manager import LocalizationManager
+from karaoke_bot.localization.local_files.scripts.owner.loc_new_karaoke import local_dict
+from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
+
+
+lm = LocalizationManager(local_dict=local_dict)
+kf = KeyboardFactory(lm=lm)
 
 
 async def new_karaoke_command(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['owner'] = message.from_user
 
-    await message.answer(f"Come up with a <b>NAME</b> for your karaoke.\n\n"
-                         f"To make it easier for users to find you, "
-                         f"you can come up with a <b>NAME</b> similar to your establishment.", parse_mode='HTML')
+    await message.answer(
+        text=lm.localize_text(
+            new_karaoke_command.__name__,
+            message.from_user.language_code,
+            params=['messages', 'new_name']
+        ),
+        parse_mode='HTML'
+    )
 
     await NewKaraoke.name.set()
 
 
 async def karaoke_name_registration(message: types.Message, state: FSMContext):
+    fname = karaoke_name_registration.__name__
+    lg_code = message.from_user.language_code
+
     karaoke_name = message.text
     if karaoke_not_exists(karaoke_name):
         async with state.proxy() as data:
             data['karaoke_name'] = karaoke_name
+            data['message_karaoke_name'] = message
 
         current_state = await state.get_state()
-        keyboard = InlineKeyboardMarkup()
         if current_state == 'NewKaraoke:name':
-            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip avatar'))
+            await NewKaraoke.avatar.set()
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton(
+                text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+                callback_data='new_karaoke skip avatar')
+            )
             await message.answer(
-                "Now send the 🖼 <b>PHOTO</b> you want to set as your karaoke avatar.",
+                text=lm.localize_text(fname, lg_code, params=['messages', 'now_send_photo']),
                 reply_markup=keyboard,
                 parse_mode='HTML'
             )
-            await NewKaraoke.avatar.set()
         else:
-            keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
-            keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
-            await message.answer('✅ Success! <b>NAME</b> updated.', reply_markup=keyboard, parse_mode='HTML')
+            await message.answer(
+                text=lm.localize_text(fname, lg_code, params=['messages', 'success_update']),
+                reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
+                parse_mode='HTML'
+            )
     else:
-        await message.reply("🔒 Sorry, this <b>NAME</b> is already taken.", parse_mode='HTML')
+        await message.reply(
+            text=lm.localize_text(fname, lg_code, params=['messages', 'already_taken']),
+            parse_mode='HTML'
+        )
 
 
 async def karaoke_name_is_invalid(message: types.Message):
     await message.reply(
-        "The <b>NAME</b> must be presented in text and contain't any punctuation marks, "
-        "except for: <b>\"$*&_@\"</b>\n\n"
-        "If you want to stop filling out the questionnaire - send the command - /cancel",
+        text=lm.localize_text(
+            karaoke_name_is_invalid.__name__,
+            message.from_user.language_code,
+            params=['messages', 'invalid_name']
+        ),
         parse_mode='HTML'
     )
 
 
 async def karaoke_avatar_registration(message: types.Message, state: FSMContext):
+    fname = karaoke_avatar_registration.__name__
+    lg_code = message.from_user.language_code
+
     async with state.proxy() as data:
         data['karaoke_avatar'] = message.photo[0].file_id
 
     current_state = await state.get_state()
-    keyboard = InlineKeyboardMarkup()
     if current_state == 'NewKaraoke:avatar':
         await NewKaraoke.description.set()
-        keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
+        keyboard = InlineKeyboardMarkup()
+        keyboard.add(InlineKeyboardButton(
+            text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+            callback_data='new_karaoke skip description')
+        )
         await message.answer(
-            "Now come up with 🗓 <b>DESCRIPTION</b> for your karaoke",
+            text=lm.localize_text(fname, lg_code, params=['messages', 'send_description']),
             reply_markup=keyboard,
-            parse_mode='HTML')
+            parse_mode='HTML'
+        )
     else:
-        keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
-        keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
-        await message.answer('✅ Success! 🖼 <b>AVATAR</b> updated.', reply_markup=keyboard, parse_mode='HTML')
+        await message.answer(
+            text=lm.localize_text(fname, lg_code, params=['messages', 'avatar_updated']),
+            reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
+            parse_mode='HTML'
+        )
 
 
 async def karaoke_avatar_is_invalid(message: types.Message):
     await message.reply(
-        "It seems you sent something wrong. "
-        "Please send a 🖼 <b>PHOTO</b> to the avatar for your karaoke.\n\n"
-        "If you want to stop filling out the questionnaire - send the command - /cancel",
+        text=lm.localize_text(
+            karaoke_avatar_is_invalid.__name__,
+            message.from_user.language_code,
+            params=['messages', 'invalid_avatar']
+        ),
         parse_mode='HTML'
     )
 
 
 async def karaoke_description_registration(message: types.Message, state: FSMContext):
+    lg_code = message.from_user.language_code
+
     async with state.proxy() as data:
         data['description'] = message.html_text
     current_state = await state.get_state()
     if current_state == 'NewKaraoke:description':
         await new_karaoke_command_confirm(message, state)
     else:
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton("<< Back to confirmation", callback_data='new_karaoke back confirmation'))
-        keyboard.insert(InlineKeyboardButton("<< Back to editing", callback_data='new_karaoke back editing'))
-        await message.answer('✅ Success! 🗓 <b>DESCRIPTION</b> updated.', reply_markup=keyboard, parse_mode='HTML')
+        await message.answer(
+            text=lm.localize_text(
+                karaoke_description_registration.__name__,
+                lg_code,
+                params=['messages', 'description_updated']
+            ),
+            reply_markup=kf.get_inline_keyboard('keyboard_back_to', lg_code),
+            parse_mode='HTML'
+        )
 
 
 async def karaoke_description_is_invalid(message: types.Message) -> None:
     await message.reply(
-        "The maximum length of the 🗓 <b>DESCRIPTION</b> should not exceed 500 characters",
+        text=lm.localize_text(
+            karaoke_description_is_invalid.__name__,
+            message.from_user.language_code,
+            params=['messages', 'description_invalid']
+        ),
         parse_mode='HTML'
     )
 
@@ -105,23 +156,25 @@ async def karaoke_description_is_invalid(message: types.Message) -> None:
 async def new_karaoke_command_confirm(
         message: types.Message,
         state: FSMContext,
-        keyboard: InlineKeyboardMarkup | None = None) -> None:
+        keyboard: InlineKeyboardMarkup | None = None
+) -> None:
 
-    confirm_text = "<b>CONFIRM THE CREATION OF KARAOKE</b>\n\n"
+    fname = new_karaoke_command_confirm.__name__
+    lg_code = message.from_user.language_code
+
+    confirm_text = lm.localize_text(fname, lg_code, params=['messages', 'confirm'])
     async with state.proxy() as data:
         name = data.get('karaoke_name')
         avatar_id = data.get('karaoke_avatar')
         description = data.get('description')
 
-    text = confirm_text + f"<b>NAME</b>: {name}"
+    local_name = lm.localize_text(fname, lg_code, params=['messages', 'name'])
+    text = confirm_text + local_name + name
     if description is not None:
-        text += f"\n🗓 <b>DESCRIPTION</b>: {description}"
+        text += lm.localize_text(fname, lg_code, params=['messages', 'description']) + description
 
     if keyboard is None:
-        keyboard = InlineKeyboardMarkup()
-        keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
-        keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
-        keyboard.add(InlineKeyboardButton('❌ Delete', callback_data='new_karaoke delete'))
+        keyboard = kf.get_inline_keyboard('keyboard_confirm', lg_code)
 
     if avatar_id is not None:
         await message.answer_photo(photo=avatar_id, caption=text, reply_markup=keyboard, parse_mode='HTML')
@@ -130,77 +183,101 @@ async def new_karaoke_command_confirm(
 
 
 async def callback_new_karaoke(callback: types.CallbackQuery, state: FSMContext):
+    fname = callback_new_karaoke.__name__
+    lg_code = callback.from_user.language_code
+
+    # Нужно заменить lg_code на код пользователя при вызове функции из callback_new_karaoke и передаче message
+    # Потому что будет передаваться message самого бота
+    callback.message.from_user.language_code = lg_code
+
+    user_id = callback.from_user.id
+
     await callback.answer()
-    # button_options = {}  # сделать словарь с кнопками позже
 
     keyboard = InlineKeyboardMarkup()
     callback_data = callback.data.split(' ')[1:]
     match callback_data:
         case ('create',):
-            keyboard.add(
-                InlineKeyboardButton("✅ Create", callback_data='new_karaoke create force'),
-                InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
-            )
-            await callback.message.edit_reply_markup(keyboard)
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_create', lg_code))
+
         case ('create', 'force'):
-            await callback.answer("✅ Karaoke successfully created!", show_alert=True)
             await callback.message.delete()
-            await register_karaoke(state)
+
+            async with state.proxy() as data:
+                message_karaoke_name: types.message = data.get('message_karaoke_name')
+            await state.set_state(NewKaraoke.new_karaoke)
+            await register_karaoke(state, lg_code=callback.from_user.language_code)
+            await search_karaoke(message=message_karaoke_name, state=state)
+
         case ('edit',):
-            keyboard.add(InlineKeyboardButton("💬 Edit name", callback_data='new_karaoke edit name'))
-            keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
-            keyboard.add(InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit description'))
-            keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
-            await callback.message.edit_reply_markup(keyboard)
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_edit', lg_code))
+
         case ('edit', 'name'):
             await NewKaraoke.edit_name.set()
-            await callback.message.answer('What <b>NAME</b> would you like for your karaoke?', parse_mode='HTML')
+            await callback.message.answer(
+                text=lm.localize_text(fname, lg_code, params=['messages', 'edit_name']),
+                parse_mode='HTML'
+            )
+
         case ('edit', 'avatar'):
             await NewKaraoke.edit_avatar.set()
-            await callback.message.answer('Attach the 🖼 <b>AVATAR</b>  you want', parse_mode='HTML')
+            await callback.message.answer(
+                text=lm.localize_text(fname, lg_code, params=['messages', 'edit_avatar']),
+                parse_mode='HTML'
+            )
+
         case ('edit', 'description'):
             await NewKaraoke.edit_description.set()
-            await callback.message.answer('What 🗓 <b>DESCRIPTION</b> would you like?', parse_mode='HTML')
+            await callback.message.answer(
+                text=lm.localize_text(fname, lg_code, params=['messages', 'edit_description']),
+                parse_mode='HTML'
+            )
+
         case ('skip', 'avatar'):
             await NewKaraoke.description.set()
             await callback.message.edit_reply_markup()  # delete markup
-            keyboard.add(InlineKeyboardButton(text='Skip', callback_data='new_karaoke skip description'))
+            keyboard.add(InlineKeyboardButton(
+                text=lm.localize_text(fname, lg_code, params=['buttons', 'skip']),
+                callback_data='new_karaoke skip description')
+            )
             await callback.message.answer(
-                "Now come up with 🗓 <b>DESCRIPTION</b> for your karaoke",
+                text=lm.localize_text(fname, lg_code, params=['messages', 'skip_avatar']),
                 reply_markup=keyboard,
                 parse_mode='HTML'
             )
+
         case ('skip', 'description'):
             await callback.message.edit_reply_markup()  # delete markup
             await new_karaoke_command_confirm(message=callback.message, state=state)
+
         case ('cancel',):
-            keyboard.add(
-                InlineKeyboardButton("❌ Cancel", callback_data='new_karaoke cancel force'),
-                InlineKeyboardButton("<< Back", callback_data='new_karaoke back')
-            )
-            await callback.message.edit_reply_markup(keyboard)
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_cancel', lg_code))
+
         case ('cancel', 'force'):
-            await callback.message.answer("❌ Create karaoke canceled")
+            await callback.message.answer(
+                text=lm.localize_text(fname, lg_code, params=['messages', 'cancel_force'])
+            )
             await callback.message.delete()
             await state.finish()
+
         case ('back',):
-            keyboard.add(InlineKeyboardButton('✅ Confirm and Create', callback_data='new_karaoke create'))
-            keyboard.insert(InlineKeyboardButton('✏️ Edit', callback_data='new_karaoke edit'))
-            keyboard.add(InlineKeyboardButton('❌ Cancel', callback_data='new_karaoke cancel'))
-            await callback.message.edit_reply_markup(keyboard)
+            await callback.message.edit_reply_markup(kf.get_inline_keyboard('keyboard_confirm', lg_code))
+
         case ('back', 'confirmation'):
             await callback.message.delete()
             await new_karaoke_command_confirm(message=callback.message, state=state)
+
         case ('back', 'editing'):
             await callback.message.delete()
-            keyboard.add(InlineKeyboardButton("💬 Edit name", callback_data='new_karaoke edit name'))
-            keyboard.insert(InlineKeyboardButton("🖼 Edit avatar", callback_data='new_karaoke edit avatar'))
-            keyboard.add(InlineKeyboardButton("🗓 Edit description", callback_data='new_karaoke edit description'))
-            keyboard.add(InlineKeyboardButton("<< Back", callback_data='new_karaoke back'))
-            await new_karaoke_command_confirm(message=callback.message, state=state, keyboard=keyboard)
+            await new_karaoke_command_confirm(
+                message=callback.message,
+                state=state,
+                keyboard=kf.get_inline_keyboard('keyboard_edit', lg_code)
+            )
 
 
-async def register_karaoke(state: FSMContext):
+async def register_karaoke(state: FSMContext, lg_code: str):
+    fname = register_karaoke.__name__
 
     async with state.proxy() as data:
         owner: types.User = data.get('owner')
@@ -208,22 +285,25 @@ async def register_karaoke(state: FSMContext):
         avatar_id: str = data.get('karaoke_avatar')
         description: str = data.get('description')
 
-    success_text = "✅ Success! You have created your <b>virtual karaoke</b>!"
-    fail_text = "Oops, something went wrong, we are already working on the error"
     try:
         create_karaoke(telegram_id=owner.id, name=karaoke_name, avatar_id=avatar_id, description=description)
         create_karaoke_session(karaoke_name=karaoke_name)
     except TelegramProfileNotFoundError as e:
         print(f"ERROR OCCURRED: {e}")
         await register_telegram_user(owner)
-        await register_karaoke(state)
+        await register_karaoke(state, lg_code)
     except Exception as e:
         print(f"ERROR OCCURRED: {e}")
-        await bot.send_message(chat_id=owner.id, text=fail_text)
+        await bot.send_message(
+            chat_id=owner.id,
+            text=lm.localize_text(fname, lg_code, params=['messages', 'fail'])
+        )
     else:
-        await bot.send_message(chat_id=owner.id, text=success_text, parse_mode='HTML')
-    finally:
-        await state.finish()
+        await bot.send_message(
+            chat_id=owner.id,
+            text=lm.localize_text(fname, lg_code, params=['messages', 'success']),
+            parse_mode='HTML'
+        )
 
 
 def register_handlers(dp: Dispatcher):

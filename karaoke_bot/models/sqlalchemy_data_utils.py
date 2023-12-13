@@ -3,6 +3,7 @@ from .sqlalchemy_models_without_polymorph import Karaoke, TelegramProfile, Accou
 from .sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, InvalidAccountStateError,\
     EmptyFieldError
 from aiogram import types
+from typing import List, Set
 
 
 def create_or_update_telegram_profile(user: types.User) -> None:
@@ -25,6 +26,19 @@ def create_or_update_telegram_profile(user: types.User) -> None:
             )
             session.add(Account(telegram_profile=telegram_profile))
         session.commit()
+
+
+def get_account_roles(telegram_id: int):
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            if account is not None:
+                return account.is_visitor, account.is_owner, account.is_moderator, account.is_administrator
+
+            raise EmptyFieldError('TelegramProfile', 'account')
+
+        raise TelegramProfileNotFoundError(telegram_id)
 
 
 def karaoke_not_exists(karaoke_name: str) -> bool:
@@ -53,7 +67,7 @@ def create_karaoke_session(karaoke_name: str) -> None:
             raise KaraokeNotFoundError(karaoke_name=karaoke_name)
 
 
-def create_karaoke(telegram_id: int, name: str, avatar_id: str, description: str) -> None:
+def create_karaoke(telegram_id: int, name: str, avatar_id: str | None, description: str | None) -> None:
     with AlchemySession() as session:
 
         telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
@@ -96,10 +110,35 @@ def subscribe_to_karaoke(telegram_id: int, karaoke_name: str) -> None:
             raise TelegramProfileNotFoundError(telegram_id)
 
 
-def find_karaoke(karaoke_name: str) -> Karaoke | None:
+def get_karaoke_data_by_name(karaoke_name: str, user_id: int) -> dict:
     with AlchemySession() as session:
         karaoke = session.query(Karaoke).filter_by(name=karaoke_name).first()
-    return karaoke
+        if karaoke is not None:
+            avatar_id = karaoke.avatar_id
+            description = karaoke.description
+            owner_username = karaoke.owner.account.telegram_profile.username
+            subscribers = karaoke.subscribers
+
+            is_subscribed = False
+            for visitor in subscribers:
+                if user_id == visitor.account.telegram_profile.id:
+                    is_subscribed = True
+                    break
+
+            data = {
+                'avatar_id': avatar_id,
+                'description': description,
+                'owner': {
+                    'username': owner_username
+                },
+                'subscribers': {
+                    'amount': len(subscribers),
+                    'is_subscribed': is_subscribed
+                }
+            }
+            return data
+
+        raise KaraokeNotFoundError(karaoke_name=karaoke_name)
 
 
 def get_selected_karaoke_data(telegram_id: int) -> tuple:
@@ -111,7 +150,7 @@ def get_selected_karaoke_data(telegram_id: int) -> tuple:
             if visitor is not None:
                 selected_karaoke: Karaoke = visitor.selected_karaoke
                 if selected_karaoke is not None:
-                    return selected_karaoke.name, selected_karaoke.owner.account_id
+                    return selected_karaoke.name, selected_karaoke.owner.account.telegram_profile.id
 
                 raise EmptyFieldError('Visitor', 'selected_karaoke')
 
@@ -169,7 +208,6 @@ def add_performance_to_visitor(telegram_id: int, track_url: str):
             if visitor is not None:
                 selected_karaoke: Karaoke = visitor.selected_karaoke
                 if selected_karaoke is not None:
-                    print(selected_karaoke.session.id)
                     session.add(
                         VisitorPerformance(
                             visitor_id=visitor.account_id,
@@ -200,5 +238,63 @@ def get_visitor_karaoke_names(telegram_id: int) -> set:
                 raise EmptyFieldError('Visitor', 'karaokes')
 
             raise InvalidAccountStateError(account_id=account.id, state='visitor')
+
+        raise TelegramProfileNotFoundError(telegram_id=telegram_id)
+
+
+def get_visitor_karaokes_data(telegram_id: int) -> dict[str]:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            visitor: Visitor = account.visitor
+            if visitor is not None:
+                karaokes: List[Karaoke] = visitor.karaokes
+                if karaokes is not None:
+                    data = {}
+                    for karaoke in karaokes:
+                        telegram_profile: TelegramProfile = karaoke.owner.account.telegram_profile
+
+                        data[karaoke.name] = {
+                            'owner': {
+                                'id': telegram_profile.id,
+                                'username': telegram_profile.username
+                            },
+                            'is_active': karaoke.is_active,
+                            'subscribers_amount': len(karaoke.subscribers),
+                            'avatar_id': karaoke.avatar_id,
+                            'description': karaoke.description
+                        }
+                    return data
+
+                raise EmptyFieldError('Visitor', 'karaokes')
+
+            raise InvalidAccountStateError(account_id=account.id, state='visitor')
+
+        raise TelegramProfileNotFoundError(telegram_id=telegram_id)
+
+
+def get_owner_karaokes_data(telegram_id: int) -> dict[str]:
+    with AlchemySession() as session:
+        telegram_profile = session.query(TelegramProfile).filter_by(id=telegram_id).first()
+        if telegram_profile is not None:
+            account: Account = telegram_profile.account
+            owner: Owner = account.owner
+            if owner is not None:
+                karaokes: Set[Karaoke] = owner.karaokes
+                if karaokes is not None:
+                    data = {}
+                    for karaoke in karaokes:
+                        data[karaoke.name] = {
+                            'is_active': karaoke.is_active,
+                            'subscribers_amount': len(karaoke.subscribers),
+                            'avatar_id': karaoke.avatar_id,
+                            'description': karaoke.description
+                        }
+                    return data
+
+                raise EmptyFieldError('Owner', 'karaokes')
+
+            raise InvalidAccountStateError(account_id=account.id, state='owner')
 
         raise TelegramProfileNotFoundError(telegram_id=telegram_id)
