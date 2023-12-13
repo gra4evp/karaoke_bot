@@ -1,11 +1,6 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.keyboards import keyboard_en
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.config import HELLO_TEXT, START_TEXT
-# from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
-from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
 from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
 from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 from karaoke_bot.localization.localization_manager import LocalizationManager
