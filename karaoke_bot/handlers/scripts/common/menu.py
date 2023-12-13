@@ -1,7 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.keyboards import other_keyboard
+from karaoke_bot.keyboards import keyboard_en
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from karaoke_bot.models.sqlalchemy_models_without_polymorph import TelegramProfile, Account, Session
 from karaoke_bot.models.sqlalchemy_data_utils import create_or_update_telegram_profile
@@ -120,7 +120,7 @@ async def callback_menu_command(callback: types.CallbackQuery, state: FSMContext
 
 def register_handlers(dispatcher: Dispatcher):
 
-    dispatcher.register_message_handler(menu_command, Text(equals="menu", ignore_case=True), state='*')
+    dispatcher.register_message_handler(menu_command, Text(equals=["menu", "меню"], ignore_case=True), state='*')
     dispatcher.register_message_handler(menu_command, commands=['menu'], state='*')
 
     dispatcher.register_callback_query_handler(callback_menu_command, Text(startswith='menu'))
