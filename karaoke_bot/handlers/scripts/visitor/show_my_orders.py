@@ -34,7 +34,6 @@ async def show_my_orders_command(message: types.Message):
             if queue_length:
                 for i in range(queue_length):
                     keyboard = InlineKeyboardMarkup()
-                    keyboard.add(InlineKeyboardButton(text="✅ Set to perform", callback_data='set_to_perform'))
                     keyboard.insert(InlineKeyboardButton(text="❌ Remove", callback_data=f'rm_track'))
                     await message.answer(f"{i + 1}. {hlink('Track', user.playlist[i].url)}\n"
                                          f"Karaoke: {karaoke.name}",
