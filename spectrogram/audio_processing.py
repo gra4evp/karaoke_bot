@@ -36,15 +36,33 @@ def get_spectrograms(audio, sr: float, n_samples: int, start: float, duration: f
     return spectrograms
 
 
+def plot_spectrograms(spectrograms, sr: float):
+    plt.figure(figsize=(8, 3))
+
+    plt.subplot(2, 1, 1)
+    librosa.display.specshow(librosa.amplitude_to_db(np.abs(spectrograms[0]), ref=np.max), sr=sr, y_axis='log', x_axis='time')
+    # plt.title('Spectrogram 1')
+    # plt.colorbar(format='%+2.0f dB')
+
+    plt.subplot(2, 1, 2)
+    librosa.display.specshow(librosa.amplitude_to_db(np.abs(spectrograms[1]), ref=np.max), sr=sr, y_axis='log', x_axis='time')
+    # plt.title('Spectrogram 2')
+    # plt.colorbar(format='%+2.0f dB')
+
+    plt.tight_layout()
+    plt.show()
+
+
 if __name__ == '__main__':
     folder_path = r'D:\PROGRAMMS\PYTHON_PROJECTS\youtube_parse\tracks_wav'
     filenames = os.listdir(folder_path)
 
     y, sr = librosa.load(os.path.join(folder_path, filenames[0]), sr=44100, mono=True)
-    sp = get_spectrograms(y, sr, 1, 45, 30, 5)
+    sp = get_spectrograms(y, sr, 2, 30, 30, 25)
+    plot_spectrograms(sp, sr)
+    # librosa.display.specshow(librosa.amplitude_to_db(np.abs(sp[0]), ref=np.max), sr=sr, y_axis='log', x_axis='time')
+    # plt.colorbar(format='%+2.0f dB')
 
-    librosa.display.specshow(librosa.amplitude_to_db(np.abs(sp[0]), ref=np.max), sr=sr, y_axis='log', x_axis='time')
-    plt.colorbar(format='%+2.0f dB')
+    # plt.show()
 
-    plt.show()
 
