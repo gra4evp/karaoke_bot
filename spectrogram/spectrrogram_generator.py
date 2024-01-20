@@ -1,6 +1,4 @@
 import threading
-from sklearn.utils import shuffle
-import numpy as np
 import os
 import random
 import librosa
