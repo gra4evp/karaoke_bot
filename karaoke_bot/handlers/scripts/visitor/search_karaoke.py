@@ -55,7 +55,7 @@ async def search_karaoke(message: types.Message, state: FSMContext):
         subscribers_amount = karaoke_data['subscribers']['amount']
         caption = f"{lm.localize_text(fname, lg_code, params=['messages', 'karaoke'])} {karaoke_name}\n" \
                   f"{lm.localize_text(fname, lg_code, params=['messages', 'owner'])} @{karaoke_data['owner']['username']}\n" \
-                  f"{lm.localize_text(fname, lg_code, params=['messages', 'subscribers'])}: {format_subscribers_count(subscribers_amount)}\n\n"
+                  f"{lm.localize_text(fname, lg_code, params=['messages', 'subscribers'])} {format_subscribers_count(subscribers_amount)}\n\n"
 
         if karaoke_data['description'] is not None:
             caption += karaoke_data['description']
