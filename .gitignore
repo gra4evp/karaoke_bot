@@ -3,3 +3,4 @@
 /venv/
 /karaoke_bot/karaoke
 /.pytest_cache
+/poetry.lock
