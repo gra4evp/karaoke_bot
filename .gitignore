@@ -1,6 +1,5 @@
-/karaoke_bot/utils/tracks_wav/
-/karaoke_bot/utils/tracks_cache/
+/bot/utils/tracks_wav/
+/bot/utils/tracks_cache/
 /venv/
-/karaoke_bot/karaoke
 /.pytest_cache
 /poetry.lock
