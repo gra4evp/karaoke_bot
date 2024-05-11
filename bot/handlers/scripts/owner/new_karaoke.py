@@ -5,15 +5,15 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from string import ascii_letters, digits
 
-from karaoke_bot.create_bot import bot
-from karaoke_bot.states.owner_states import NewKaraoke
-from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
-from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
-from karaoke_bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
-from karaoke_bot.localization.localization_manager import LocalizationManager
-from karaoke_bot.localization.local_files.scripts.owner.loc_new_karaoke import local_dict
-from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
+from bot.create_bot import bot
+from bot.states.owner_states import NewKaraoke
+from bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from bot.handlers.scripts.visitor.search_karaoke import search_karaoke
+from bot.models.sqlalchemy_data_utils import karaoke_not_exists, create_karaoke, create_karaoke_session
+from bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError
+from bot.localization.localization_manager import LocalizationManager
+from bot.localization.local_files.scripts.owner.loc_new_karaoke import local_dict
+from bot.keyboards.keyboard_factory import KeyboardFactory
 
 
 lm = LocalizationManager(local_dict=local_dict)

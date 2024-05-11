@@ -1,19 +1,19 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.states.visitor_states import KaraokeSearch
-from karaoke_bot.create_bot import bot
+from bot.states.visitor_states import KaraokeSearch
+from bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
-from karaoke_bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_karaoke_data_by_name
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
+from bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from bot.models.sqlalchemy_data_utils import subscribe_to_karaoke, get_karaoke_data_by_name
+from bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
-from karaoke_bot.handlers.utils import format_subscribers_count
+from bot.handlers.utils import format_subscribers_count
 from .order_track import order_track_command
-from karaoke_bot.states import owner_states, visitor_states
-from karaoke_bot.localization.localization_manager import LocalizationManager
-from karaoke_bot.localization.local_files.scripts.visitor.loc_search_karaoke import local_dict
-from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
+from bot.states import owner_states, visitor_states
+from bot.localization.localization_manager import LocalizationManager
+from bot.localization.local_files.scripts.visitor.loc_search_karaoke import local_dict
+from bot.keyboards.keyboard_factory import KeyboardFactory
 
 
 lm = LocalizationManager(local_dict=local_dict)

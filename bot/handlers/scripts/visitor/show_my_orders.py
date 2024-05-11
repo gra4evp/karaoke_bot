@@ -1,9 +1,9 @@
 from aiogram import types, Dispatcher
-from karaoke_bot.create_bot import bot
+from bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.models.sqlalchemy_data_utils import get_selected_karaoke_data
-from karaoke_bot.models.sqlalchemy_exceptions import EmptyFieldError, InvalidAccountStateError
-from karaoke_bot.karaoke_gram.karaoke import find_first_match_karaoke
+from bot.models.sqlalchemy_data_utils import get_selected_karaoke_data
+from bot.models.sqlalchemy_exceptions import EmptyFieldError, InvalidAccountStateError
+from bot.karaoke_gram.karaoke import find_first_match_karaoke
 from aiogram.utils.markdown import hlink
 
 

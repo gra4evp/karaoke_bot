@@ -4,7 +4,7 @@ SQLite repository class module.
 import sqlite3
 from inspect import get_annotations
 from typing import Type, Any
-from karaoke_bot.repository.abstract_repository import AbstractRepository, T
+from bot.repository.abstract_repository import AbstractRepository, T
 
 
 class SQLiteRepository(AbstractRepository[T]):

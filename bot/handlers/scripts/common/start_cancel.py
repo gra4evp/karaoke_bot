@@ -1,11 +1,11 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.handlers.scripts.visitor.search_karaoke import search_karaoke
-from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
-from karaoke_bot.localization.localization_manager import LocalizationManager
-from karaoke_bot.localization.local_files.scripts.common.loc_start_cancel import local_dict
-from karaoke_bot.keyboards.keyboard_factory import KeyboardFactory
+from bot.handlers.scripts.visitor.search_karaoke import search_karaoke
+from bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from bot.localization.localization_manager import LocalizationManager
+from bot.localization.local_files.scripts.common.loc_start_cancel import local_dict
+from bot.keyboards.keyboard_factory import KeyboardFactory
 
 
 lm = LocalizationManager(local_dict=local_dict)

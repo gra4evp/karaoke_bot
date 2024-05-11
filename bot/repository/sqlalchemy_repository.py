@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session as Session_
 from typing import Type, Any
-from karaoke_bot.repository.abstract_repository import AbstractRepository, T
-from karaoke_bot.models.sqlalchemy_models_without_polymorph import AlchemySession, TelegramProfile, Account,\
+from bot.repository.abstract_repository import AbstractRepository, T
+from bot.models.sqlalchemy_models_without_polymorph import AlchemySession, TelegramProfile, Account,\
     Visitor, Moderator, Owner, Administrator, VisitorPerformance, Session, Karaoke, TrackVersion, Track, Artist
-from karaoke_bot.models.sqlalchemy_exceptions import EmptyFieldError
+from bot.models.sqlalchemy_exceptions import EmptyFieldError
 
 
 class SQLAlchemyRepository:

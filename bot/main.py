@@ -1,6 +1,6 @@
 from aiogram.utils import executor
 from create_bot import dispatcher
-from karaoke_bot.handlers.scripts import admin, moderator, owner, visitor, common
+from bot.handlers.scripts import admin, moderator, owner, visitor, common
 
 
 common.start_cancel.register_handlers(dispatcher)

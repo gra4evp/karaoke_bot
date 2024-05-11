@@ -4,8 +4,9 @@ from typing import Dict
 
 import yt_dlp.utils
 
-from music2vec.music2vec.extraction import Extractor
-from music2vec.music2vec.dataset import GENRES
+# Закомитили все что связано с music2vec временно для написания инверенса
+# from music2vec.music2vec.extraction import Extractor
+# from music2vec.music2vec.dataset import GENRES
 from yt_dlp import YoutubeDL
 import os
 import csv
@@ -21,7 +22,7 @@ class YouTubeTrackDownloader:
         self.abspath = ''
         self.genres = None
         self.features = None
-        self.extractor = Extractor()
+        # self.extractor = Extractor()
 
     def get_info(self) -> Dict[str, str]:
         if not self.info:
@@ -74,9 +75,9 @@ class YouTubeTrackDownloader:
         # print(self.abspath)
         return self.filename
 
-    def wav2vec(self, filepath):
-        self.genres, self.features = self.extractor(filepath)
-        return self.genres, self.features
+    # def wav2vec(self, filepath):
+    #    self.genres, self.features = self.extractor(filepath)
+    #    return self.genres, self.features
 
     def __str__(self) -> str:
         return f"YouTubeTrack: title - {self.info['title']} id - {self.info['video_id']}"

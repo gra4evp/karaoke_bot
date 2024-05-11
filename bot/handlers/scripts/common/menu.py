@@ -2,12 +2,12 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.models.sqlalchemy_data_utils import get_account_roles, get_visitor_karaokes_data,\
+from bot.models.sqlalchemy_data_utils import get_account_roles, get_visitor_karaokes_data,\
     get_owner_karaokes_data
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, EmptyFieldError
-from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, EmptyFieldError
+from bot.handlers.scripts.common.register_telegram_user import register_telegram_user
 import json
-from karaoke_bot.create_bot import bot
+from bot.create_bot import bot
 
 
 async def menu_command(message: types.Message, state: FSMContext):

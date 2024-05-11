@@ -1,6 +1,6 @@
 import pymysql
 from typing import Any, Type
-from karaoke_bot.repository.abstract_repository import AbstractRepository, T
+from bot.repository.abstract_repository import AbstractRepository, T
 
 
 class MySQLRepository(AbstractRepository[T]):

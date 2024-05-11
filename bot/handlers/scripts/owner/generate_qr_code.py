@@ -1,7 +1,7 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.create_bot import bot
+from bot.create_bot import bot
 import os
 import qrcode
 

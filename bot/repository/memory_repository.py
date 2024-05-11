@@ -5,7 +5,7 @@
 from itertools import count
 from typing import Any
 
-from karaoke_bot.repository.abstract_repository import AbstractRepository, T
+from bot.repository.abstract_repository import AbstractRepository, T
 
 
 class MemoryRepository(AbstractRepository[T]):

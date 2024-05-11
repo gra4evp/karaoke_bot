@@ -1,12 +1,12 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.states.visitor_states import OrderTrack
-from karaoke_bot.create_bot import bot
+from bot.states.visitor_states import OrderTrack
+from bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.models.sqlalchemy_data_utils import get_visitor_karaoke_names, change_selected_karaoke,\
+from bot.models.sqlalchemy_data_utils import get_visitor_karaoke_names, change_selected_karaoke,\
     get_karaoke_owner_id
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
+from bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
 
 

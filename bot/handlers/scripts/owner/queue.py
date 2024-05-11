@@ -3,12 +3,12 @@ from aiogram.dispatcher import FSMContext
 from aiogram import types
 from aiogram.dispatcher.filters import Text
 from aiogram.utils.markdown import hlink
-from karaoke_bot.karaoke_gram.karaoke import ready_to_play_karaoke_list
+from bot.karaoke_gram.karaoke import ready_to_play_karaoke_list
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from karaoke_bot.karaoke_gram.karaoke import Karaoke
-from karaoke_bot.karaoke_gram.types import TrackRemoved
-from karaoke_bot.karaoke_gram.utils import find_first_match_karaoke, find_first_match_track
-from karaoke_bot.states.owner_states import LapQueue
+from bot.karaoke_gram.karaoke import Karaoke
+from bot.karaoke_gram.types import TrackRemoved
+from bot.karaoke_gram.utils import find_first_match_karaoke, find_first_match_track
+from bot.states.owner_states import LapQueue
 
 
 async def show_queue_command(message: types.Message):

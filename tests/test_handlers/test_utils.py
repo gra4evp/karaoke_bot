@@ -1,5 +1,5 @@
 import pytest
-from karaoke_bot.handlers.utils import format_subscribers_count
+from bot.handlers.utils import format_subscribers_count
 
 
 test_data = [

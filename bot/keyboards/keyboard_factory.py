@@ -1,4 +1,4 @@
-from karaoke_bot.localization.localization_manager import LocalizationManager
+from bot.localization.localization_manager import LocalizationManager
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 

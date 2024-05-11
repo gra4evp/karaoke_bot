@@ -1,16 +1,16 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher import FSMContext
-from karaoke_bot.states.visitor_states import OrderTrack
-from karaoke_bot.create_bot import bot
+from bot.states.visitor_states import OrderTrack
+from bot.create_bot import bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from karaoke_bot.handlers.scripts.common.register_telegram_user import register_telegram_user
-from karaoke_bot.karaoke_gram.karaoke import add_track_to_queue
-from karaoke_bot.models.sqlalchemy_data_utils import get_selected_karaoke_data, add_performance_to_visitor
-from karaoke_bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
+from bot.handlers.scripts.common.register_telegram_user import register_telegram_user
+from bot.karaoke_gram.karaoke import add_track_to_queue
+from bot.models.sqlalchemy_data_utils import get_selected_karaoke_data, add_performance_to_visitor
+from bot.models.sqlalchemy_exceptions import TelegramProfileNotFoundError, KaraokeNotFoundError, \
     EmptyFieldError, InvalidAccountStateError
-from karaoke_bot.localization.localization_manager import LocalizationManager
-from karaoke_bot.localization.local_files.scripts.visitor.loc_order_track import local_dict
+from bot.localization.localization_manager import LocalizationManager
+from bot.localization.local_files.scripts.visitor.loc_order_track import local_dict
 
 
 lm = LocalizationManager(local_dict=local_dict)
