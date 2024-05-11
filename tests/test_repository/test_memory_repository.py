@@ -1,4 +1,4 @@
-from karaoke_bot.repository.memory_repository import MemoryRepository
+from bot.repository.memory_repository import MemoryRepository
 import pytest
 
 

@@ -1,4 +1,4 @@
-from karaoke_bot.repository.abstract_repository import AbstractRepository
+from bot.repository.abstract_repository import AbstractRepository
 import pytest
 
 

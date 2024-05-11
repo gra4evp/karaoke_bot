@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import os
 import pytest
 
-from karaoke_bot.repository.sqlite_repository import SQLiteRepository
+from bot.repository.sqlite_repository import SQLiteRepository
 
 
 @pytest.fixture(name="custom_class")
